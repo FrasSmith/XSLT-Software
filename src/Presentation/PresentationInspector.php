@@ -1,0 +1,159 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Effortmark\PptxChecker\Presentation;
+
+use DOMDocument;
+use DOMElement;
+use DOMNode;
+use DOMXPath;
+
+/**
+ * Extracts the small semantic model required by accessibility rules from OOXML.
+ *
+ * This intentionally runs before XSLT because the HTML report discards metadata
+ * such as decorative-image markers and relationship identifiers.
+ */
+final class PresentationInspector
+{
+    private const PRESENTATION_NS = 'http://schemas.openxmlformats.org/presentationml/2006/main';
+    private const DRAWING_NS = 'http://schemas.openxmlformats.org/drawingml/2006/main';
+    private const RELATIONSHIP_NS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+
+    /**
+     * Reads slides in numeric order and captures titles, visible text, and pictures.
+     * Image binaries are not loaded; their relationship targets identify them.
+     *
+     * @return list<array{number: int, title: string, visibleText: string, images: list<array{filename: string, description: string, decorative: bool}>}>
+     */
+    public function inspect(DOMDocument $document): array
+    {
+        $xpath = new DOMXPath($document);
+        $xpath->registerNamespace('p', self::PRESENTATION_NS);
+        $xpath->registerNamespace('a', self::DRAWING_NS);
+        $xpath->registerNamespace('r', self::RELATIONSHIP_NS);
+
+        $nodes = $xpath->query("/files/file[contains(@name, 'ppt/slides/slide') and not(contains(@name, '/_rels/'))]");
+        if ($nodes === false) {
+            throw new ProcessingException('The presentation slides could not be inspected.');
+        }
+
+        $slideNodes = [];
+        foreach ($nodes as $node) {
+            if ($node instanceof DOMElement) {
+                $slideNodes[] = $node;
+            }
+        }
+        usort($slideNodes, static fn (DOMElement $left, DOMElement $right): int => (int) $left->getAttribute('num') <=> (int) $right->getAttribute('num'));
+
+        $slides = [];
+        foreach ($slideNodes as $position => $slideNode) {
+            $number = (int) $slideNode->getAttribute('num');
+            $titleNodes = $xpath->query(".//p:sp[.//p:ph[@type='title' or @type='ctrTitle']]//a:t", $slideNode);
+            $textNodes = $xpath->query('.//a:t', $slideNode);
+            $pictureNodes = $xpath->query('.//p:pic', $slideNode);
+
+            $images = [];
+            if ($pictureNodes !== false) {
+                foreach ($pictureNodes as $pictureNode) {
+                    if (!$pictureNode instanceof DOMElement) {
+                        continue;
+                    }
+                    $relationshipId = $this->firstValue($xpath, './/a:blip/@r:embed', $pictureNode);
+                    $images[] = [
+                        'filename' => $this->relationshipTarget($xpath, $document, $number, $relationshipId),
+                        'description' => trim($this->firstValue($xpath, './/p:cNvPr/@descr', $pictureNode)),
+                        'decorative' => $this->isDecorative($xpath, $pictureNode),
+                    ];
+                }
+            }
+
+            $slides[] = [
+                'number' => $position + 1,
+                'title' => $this->joinValues($titleNodes === false ? [] : iterator_to_array($titleNodes)),
+                'visibleText' => $this->joinValues($textNodes === false ? [] : iterator_to_array($textNodes)),
+                'images' => $images,
+            ];
+        }
+
+        return $slides;
+    }
+
+    /**
+     * Resolves an image's local relationship ID through the current slide's
+     * relationship document. Relationship IDs are scoped to each slide.
+     */
+    private function relationshipTarget(DOMXPath $xpath, DOMDocument $document, int $slideNumber, string $relationshipId): string
+    {
+        if ($relationshipId === '') {
+            return '';
+        }
+
+        foreach ($document->getElementsByTagName('file') as $file) {
+            if (!$file instanceof DOMElement || $file->getAttribute('name') !== sprintf('ppt/slides/_rels/slide%d.xml.rels', $slideNumber)) {
+                continue;
+            }
+
+            $relationships = $xpath->query('.//*[@Id]', $file);
+            if ($relationships === false) {
+                return '';
+            }
+            foreach ($relationships as $relationship) {
+                if ($relationship instanceof DOMElement && $relationship->getAttribute('Id') === $relationshipId) {
+                    return $relationship->getAttribute('Target');
+                }
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Recognises PowerPoint's extension-based decorative marker without depending
+     * on a particular namespace prefix, which Office producers may rename.
+     */
+    private function isDecorative(DOMXPath $xpath, DOMElement $picture): bool
+    {
+        $nodes = $xpath->query(".//*[local-name()='decorative']", $picture);
+        if ($nodes === false) {
+            return false;
+        }
+
+        foreach ($nodes as $node) {
+            if (!$node instanceof DOMElement) {
+                continue;
+            }
+            $value = strtolower($node->getAttribute('val'));
+            if ($value === '' || $value === '1' || $value === 'true') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** Returns the first XPath value or an empty string for optional metadata. */
+    private function firstValue(DOMXPath $xpath, string $query, DOMNode $context): string
+    {
+        $nodes = $xpath->query($query, $context);
+        return $nodes !== false && $nodes->length > 0 ? (string) $nodes->item(0)?->nodeValue : '';
+    }
+
+    /**
+     * Flattens DrawingML text runs while preserving their document order.
+     *
+     * @param iterable<DOMNode> $nodes
+     */
+    private function joinValues(iterable $nodes): string
+    {
+        $values = [];
+        foreach ($nodes as $node) {
+            $value = trim((string) $node->nodeValue);
+            if ($value !== '') {
+                $values[] = $value;
+            }
+        }
+        return implode(' ', $values);
+    }
+}
