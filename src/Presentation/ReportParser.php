@@ -6,6 +6,7 @@ namespace Effortmark\PptxChecker\Presentation;
 
 use DOMDocument;
 use DOMElement;
+use DOMNode;
 use DOMXPath;
 
 /**
@@ -29,7 +30,7 @@ final class ReportParser
         $previous = libxml_use_internal_errors(true);
         try {
             $loaded = $document->loadHTML(
-                '<!DOCTYPE html><html><body><main id="report-root">' . $reportHtml . '</main></body></html>',
+                '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body><main id="report-root">' . $reportHtml . '</main></body></html>',
                 LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING,
             );
         } finally {
@@ -57,7 +58,7 @@ final class ReportParser
             $imageNodes = $xpath->query(".//*[contains(concat(' ', normalize-space(@class), ' '), ' image-object ')]", $node);
             if ($imageNodes !== false) {
                 foreach ($imageNodes as $imageNode) {
-                    $value = trim(preg_replace('/\s+/', ' ', $imageNode->textContent) ?? '');
+                    $value = $this->readableText($imageNode);
                     preg_match('/^Image:\s*(.*?)\s*Description:\s*(.*)$/s', $value, $matches);
                     $images[] = [
                         'filename' => trim($matches[1] ?? ''),
@@ -68,11 +69,38 @@ final class ReportParser
 
             $slides[] = [
                 'number' => $index + 1,
-                'text' => trim(preg_replace('/\s+/', ' ', $node->textContent) ?? ''),
+                'text' => $this->readableText($node),
                 'images' => $images,
             ];
         }
 
         return $slides;
+    }
+
+    /** Flattens visible HTML text while retaining separators represented by markup. */
+    private function readableText(DOMNode $node): string
+    {
+        $text = '';
+        foreach ($node->childNodes as $child) {
+            if ($child instanceof DOMElement) {
+                $tag = strtolower($child->tagName);
+                if ($tag === 'br') {
+                    $text .= ' ';
+                    continue;
+                }
+
+                $childText = $this->readableText($child);
+                if (in_array($tag, ['address', 'article', 'blockquote', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'p', 'section', 'td', 'th'], true)) {
+                    $text .= ' ' . $childText . ' ';
+                } else {
+                    $text .= $childText;
+                }
+                continue;
+            }
+
+            $text .= $child->nodeValue ?? '';
+        }
+
+        return trim(preg_replace('/\s+/u', ' ', $text) ?? '');
     }
 }

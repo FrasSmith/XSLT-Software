@@ -44,6 +44,16 @@ final class UnifiedReportRendererTest extends TestCase
         );
     }
 
+    public function testItPreservesUtf8TextWhenReparsingTheReport(): void
+    {
+        $report = '<div class="slide-item"><h1>Writer’s “summary”</h1><p>Body text</p></div>';
+
+        $html = (new UnifiedReportRenderer())->render($report, ['slides' => [['findings' => []]]]);
+
+        self::assertStringContainsString('Writer’s “summary”', $html);
+        self::assertStringNotContainsString('â', $html);
+    }
+
     public function testItMarksSlidesThatHaveNoImages(): void
     {
         $report = '<div class="slide-item"><h1>Slide 1</h1><p>Text only</p></div>';

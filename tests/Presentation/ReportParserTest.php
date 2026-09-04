@@ -24,4 +24,20 @@ final class ReportParserTest extends TestCase
         self::assertSame('../media/image1.png', $slides[0]['images'][0]['filename']);
         self::assertSame('A useful chart', $slides[0]['images'][0]['description']);
     }
+
+    public function testItPreservesUtf8QuotesAndSpacesAtHtmlBoundaries(): void
+    {
+        $html = '<div class="slide-item"><h1>Writer’s notes</h1>'
+            . '<p>Slide With<br>Monalisa Photo</p>'
+            . '<div class="image-object"><p><strong>Image:</strong> image.png<br>'
+            . '<span><strong>Description:</strong> “Revenue” increased sharply</span></p></div></div>';
+
+        $slides = (new ReportParser())->parseSlides($html);
+
+        self::assertSame(
+            'Writer’s notes Slide With Monalisa Photo Image: image.png Description: “Revenue” increased sharply',
+            $slides[0]['text'],
+        );
+        self::assertSame('“Revenue” increased sharply', $slides[0]['images'][0]['description']);
+    }
 }

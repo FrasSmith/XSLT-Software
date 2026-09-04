@@ -33,7 +33,7 @@ final class UnifiedReportRenderer
         $previous = libxml_use_internal_errors(true);
         try {
             $loaded = $document->loadHTML(
-                '<!DOCTYPE html><html><body><main id="unified-report-root">' . $reportHtml . '</main></body></html>',
+                '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body><main id="unified-report-root">' . $reportHtml . '</main></body></html>',
                 LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING,
             );
         } finally {

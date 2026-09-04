@@ -108,9 +108,7 @@
     </xsl:template>
 
     <!-- text-style: caption -->
-    <xsl:template match="p:sp[.//a:t]">
-        <xsl:param name="shape.type"/>
-        <xsl:variable name="lvl" select="a:pPr/@lvl"/>
+    <xsl:template match="p:sp[.//a:t and not(.//a:r)]">
         <p><xsl:value-of select="."/></p>
     </xsl:template>
 
@@ -125,69 +123,18 @@
                     .//a:buChar
                     ">
 
-                <!-- all lists are set to unordered lists -->
-                <xsl:if test="not(preceding-sibling::a:p)">
-                    <xsl:text disable-output-escaping="yes">&lt;ul></xsl:text>
-                </xsl:if>
-
-                <xsl:variable name="current.list.level">
-                    <xsl:choose>
-                        <xsl:when test="not(a:pPr/@lvl)">0</xsl:when>
-                        <xsl:otherwise>
-                            <xsl:value-of select="a:pPr/@lvl"/>
-                        </xsl:otherwise>
-                    </xsl:choose>
-                </xsl:variable>
-
-                <!-- previous list level -->
-                <xsl:variable name="prev.list.level">
-                    <xsl:choose>
-                        <xsl:when test="not(preceding-sibling::a:p[1]/a:pPr/@lvl)">0</xsl:when>
-                        <xsl:otherwise>
-                            <xsl:value-of select="preceding-sibling::a:p[1]/a:pPr/@lvl"/>
-                        </xsl:otherwise>
-                    </xsl:choose>
-                </xsl:variable>
-
-                <!-- next list level -->
-                <xsl:variable name="next.list.level">
-                    <xsl:choose>
-                        <xsl:when test="not(following-sibling::a:p[1]/a:pPr/@lvl)">0</xsl:when>
-                        <xsl:otherwise>
-                            <xsl:value-of select="following-sibling::a:p[1]/a:pPr/@lvl"/>
-                        </xsl:otherwise>
-                    </xsl:choose>
-                </xsl:variable>
-
-                <!-- Python uses the XSLT 1.0 processor
-                     - because of that, it's not possible to use the xsl:for-each-group - syntax
-                     - via grouping it's easier possible to create a deep structure from a flat one
-                     - here we check each list entry (always on the same structure level)
-                      - the difference is the lvl-attribute
-                      - writing all necessary <ul><li> elements with xsl:text -->
-
-                <xsl:text disable-output-escaping="yes">&lt;li></xsl:text>
-
-                <xsl:apply-templates/>
-
-                <xsl:if test="$next.list.level > $current.list.level">
-                    <xsl:text disable-output-escaping="yes">&lt;ul></xsl:text>
-                </xsl:if>
-                <xsl:if test="$next.list.level &lt; $current.list.level">
-                    <xsl:text disable-output-escaping="yes">&lt;/li>&lt;/ul>&lt;/li></xsl:text>
-                </xsl:if>
-                <xsl:if test="$next.list.level = $current.list.level">
-                    <xsl:text disable-output-escaping="yes">&lt;/li></xsl:text>
-                </xsl:if>
-
-                <xsl:if test="not(following-sibling::a:p)">
-                    <xsl:text disable-output-escaping="yes">&lt;/ul></xsl:text>
-                </xsl:if>
+                <!-- Emit valid standalone list markup for every item. Grouping and
+                     nesting flat DrawingML paragraphs safely requires XSLT 2.0. -->
+                <ul>
+                    <li><xsl:apply-templates/></li>
+                </ul>
             </xsl:when>
             <xsl:otherwise>
-                <xsl:apply-templates>
-                    <xsl:with-param name="shape.type" select="$shape.type"/>
-                </xsl:apply-templates>
+                <p>
+                    <xsl:apply-templates>
+                        <xsl:with-param name="shape.type" select="$shape.type"/>
+                    </xsl:apply-templates>
+                </p>
             </xsl:otherwise>
         </xsl:choose>
     </xsl:template>

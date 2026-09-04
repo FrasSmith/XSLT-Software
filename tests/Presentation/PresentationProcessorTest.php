@@ -39,12 +39,25 @@ final class PresentationProcessorTest extends TestCase
         self::assertStringContainsString('Total slides:', $result->reportHtml);
         self::assertStringContainsString('Hello world', $result->reportHtml);
         self::assertStringContainsString('Hello world', $result->slides[0]['text']);
+        self::assertStringContainsString('<ul><li>First item</li></ul>', $result->reportHtml);
+        self::assertStringContainsString('<ul><li>Second item</li></ul>', $result->reportHtml);
+        self::assertStringContainsString('First item Second item', $result->slides[0]['text']);
         self::assertSame(1, $result->review['summary']['images']);
         self::assertSame(1, $result->review['summary']['errors']);
         self::assertSame('image.alt.missing', $result->review['slides'][0]['findings'][0]['code']);
         self::assertSame('../media/image1.png', $result->review['slides'][0]['findings'][0]['filename']);
         self::assertJson(json_encode($result, JSON_THROW_ON_ERROR));
         self::assertFileExists($this->presentationPath);
+    }
+
+    public function testItPreservesTextBoundariesFromPowerPointLineBreaks(): void
+    {
+        $processor = new PresentationProcessor(dirname(__DIR__, 2) . '/resources/pptx.xsl');
+
+        $result = $processor->process(dirname(__DIR__, 2) . '/sample-files/sample2.pptx', 'sample2.pptx');
+
+        self::assertStringContainsString('Slide With<br', $result->reportHtml);
+        self::assertStringContainsString('Slide With Monalisa Photo', $result->slides[1]['text']);
     }
 
     public function testItRejectsNonPptxFilenames(): void
@@ -62,7 +75,7 @@ final class PresentationProcessorTest extends TestCase
         self::assertTrue($archive->open($path, ZipArchive::CREATE | ZipArchive::OVERWRITE));
         $archive->addFromString('[Content_Types].xml', '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>');
         $archive->addFromString('ppt/presentation.xml', '<?xml version="1.0"?><p:presentation xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"/>');
-        $archive->addFromString('ppt/slides/slide1.xml', '<?xml version="1.0" encoding="UTF-8"?><p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><p:cSld><p:spTree><p:sp><p:nvSpPr><p:nvPr><p:ph type="title"/></p:nvPr></p:nvSpPr><p:txBody><a:p><a:r><a:t>Hello world</a:t></a:r></a:p></p:txBody></p:sp><p:pic><p:nvPicPr><p:cNvPr id="2" name="Image 1"/></p:nvPicPr><p:blipFill><a:blip r:embed="rId1"/></p:blipFill></p:pic></p:spTree></p:cSld></p:sld>');
+        $archive->addFromString('ppt/slides/slide1.xml', '<?xml version="1.0" encoding="UTF-8"?><p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><p:cSld><p:spTree><p:sp><p:nvSpPr><p:nvPr><p:ph type="title"/></p:nvPr></p:nvSpPr><p:txBody><a:p><a:r><a:t>Hello world</a:t></a:r></a:p></p:txBody></p:sp><p:sp><p:nvSpPr><p:nvPr><p:ph type="body"/></p:nvPr></p:nvSpPr><p:txBody><a:p><a:pPr><a:buChar char="•"/></a:pPr><a:r><a:t>First item</a:t></a:r></a:p><a:p><a:pPr><a:buChar char="•"/></a:pPr><a:r><a:t>Second item</a:t></a:r></a:p></p:txBody></p:sp><p:pic><p:nvPicPr><p:cNvPr id="2" name="Image 1"/></p:nvPicPr><p:blipFill><a:blip r:embed="rId1"/></p:blipFill></p:pic></p:spTree></p:cSld></p:sld>');
         $archive->addFromString('ppt/slides/_rels/slide1.xml.rels', '<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Target="../media/image1.png" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"/></Relationships>');
         self::assertTrue($archive->close());
     }
