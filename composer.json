@@ -8,7 +8,8 @@
         "ext-json": "*",
         "ext-libxml": "*",
         "ext-xsl": "*",
-        "ext-zip": "*"
+        "ext-zip": "*",
+        "dompdf/dompdf": "^3.1"
     },
     "require-dev": {
         "phpunit/phpunit": "^10.5"

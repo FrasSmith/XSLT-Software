@@ -61,6 +61,8 @@ Open `http://127.0.0.1:8080/` to use the browser upload form.
 
 `GET /` displays the upload form. The form submits a `.pptx` file to `POST /report`, which returns an accessibility review followed by the existing XSLT-generated content report.
 
+The HTML result page also provides a one-time PDF download link. PDFs use A4 portrait layout, are stored as private temporary files, expire after 15 minutes, and are deleted immediately after a successful download. The download link is not included in the PDF or JSON API response.
+
 ### JSON API
 
 Send a multipart upload with the field name `file`:
@@ -149,6 +151,8 @@ PHP's `upload_max_filesize`, `post_max_size`, `memory_limit`, and request timeou
 ## Processing and privacy
 
 Each presentation is copied into a randomly named private directory under the system temporary directory. Cleanup runs in a `finally` block after success or failure. The original client filename is used only in the response, not as a storage path.
+
+Generated PDF reports are written to randomly named owner-only files in the system temporary directory. Access requires an unguessable token tied to the browser session. Each link expires after 15 minutes and is consumed after one successful download.
 
 The processor verifies basic OOXML structure and limits archive entry count, total expanded size, individual XML size, and uploaded size. XML network access and XSLT file/network operations are disabled.
 

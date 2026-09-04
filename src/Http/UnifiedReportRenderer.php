@@ -100,13 +100,6 @@ final class UnifiedReportRenderer
         )));
         $article->appendChild($heading);
 
-        $this->appendLabelledParagraph($document, $article, 'File', (string) ($finding['filename'] ?? ''), true);
-        $this->appendLabelledParagraph(
-            $document,
-            $article,
-            'Alt text',
-            trim((string) ($finding['description'] ?? '')) ?: 'None',
-        );
 
         if (($finding['score'] ?? null) !== null) {
             $score = $document->createElement('p');

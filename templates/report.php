@@ -8,6 +8,7 @@
  *
  * @var \Effortmark\PptxChecker\Presentation\AnalysisResult $result
  * @var string $unifiedReportHtml
+ * @var string $pdfDownloadUrl
  */
 ?>
 <!DOCTYPE html>
@@ -25,6 +26,10 @@
 </nav>
 <main class="container" role="main">
     <h1><?= htmlspecialchars($result->filename, ENT_QUOTES, 'UTF-8') ?></h1>
+    <p class="report-download">
+        <a class="btn btn-primary" href="<?= htmlspecialchars($pdfDownloadUrl, ENT_QUOTES, 'UTF-8') ?>">Download PDF report</a>
+        <small class="text-muted">This temporary link expires after 15 minutes and can be used once.</small>
+    </p>
 
     <section aria-labelledby="review-heading">
         <h2 id="review-heading">Presentation review</h2>

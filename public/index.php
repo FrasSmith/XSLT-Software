@@ -10,7 +10,9 @@ declare(strict_types=1);
  * failures are logged server-side and presented as generic 500 responses.
  */
 
+use Effortmark\PptxChecker\Http\PdfReportGenerator;
 use Effortmark\PptxChecker\Http\TemplateRenderer;
+use Effortmark\PptxChecker\Http\TemporaryPdfStore;
 use Effortmark\PptxChecker\Http\UnifiedReportRenderer;
 use Effortmark\PptxChecker\Http\UploadedPresentation;
 use Effortmark\PptxChecker\Presentation\PresentationProcessor;
@@ -30,6 +32,11 @@ session_start();
 
 $renderer = new TemplateRenderer(dirname(__DIR__) . '/templates');
 $unifiedReportRenderer = new UnifiedReportRenderer();
+$pdfReportGenerator = new PdfReportGenerator();
+$pdfStore = new TemporaryPdfStore();
+$pdfDownloads = is_array($_SESSION['pdf_downloads'] ?? null) ? $_SESSION['pdf_downloads'] : [];
+$pdfStore->removeExpired($pdfDownloads);
+$_SESSION['pdf_downloads'] = $pdfDownloads;
 // Environment overrides let shared-host deployments tune limits without editing code.
 $limits = new ProcessingLimits(
     maximumUploadBytes: (int) (getenv('PPTX_MAX_UPLOAD_BYTES') ?: 52_428_800),
@@ -57,8 +64,36 @@ $sendJson = static function (array|JsonSerializable $payload, int $status = 200)
     exit;
 };
 
+/** Sends a generated PDF as a one-time attachment. */
+$sendPdf = static function (string $pdf, string $filename): never {
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Content-Length: ' . strlen($pdf));
+    header('Cache-Control: no-store, private');
+    echo $pdf;
+    exit;
+};
+
 try {
     // Route matching remains explicit to avoid a framework dependency.
+    if ($method === 'GET' && $path === '/report/pdf') {
+        $token = (string) ($_GET['token'] ?? '');
+        $download = $_SESSION['pdf_downloads'][$token] ?? null;
+        if (!is_array($download)) {
+            throw new ProcessingException('This PDF download link is invalid or has expired.');
+        }
+
+        $pdfPath = (string) ($download['path'] ?? '');
+        $pdf = $pdfPath !== '' && is_file($pdfPath) ? file_get_contents($pdfPath) : false;
+        $pdfStore->removeFile($pdfPath);
+        unset($_SESSION['pdf_downloads'][$token]);
+        if ($pdf === false) {
+            throw new ProcessingException('This PDF download is no longer available.');
+        }
+
+        $sendPdf($pdf, (string) ($download['filename'] ?? 'accessibility-report.pdf'));
+    }
+
     if ($method === 'GET' && $path === '/') {
         $_SESSION['csrf_token'] ??= bin2hex(random_bytes(32));
         $sendHtml($renderer->render('index', ['csrfToken' => $_SESSION['csrf_token']]));
@@ -74,9 +109,19 @@ try {
         $upload = UploadedPresentation::fromFiles($_FILES);
         $result = $processor->process($upload->temporaryPath, $upload->originalFilename);
         $unifiedReportHtml = $unifiedReportRenderer->render($result->reportHtml, $result->review);
+        $pdfHtml = $renderer->render('pdf-report', [
+            'result' => $result,
+            'unifiedReportHtml' => $unifiedReportHtml,
+        ]);
+        $token = bin2hex(random_bytes(32));
+        $_SESSION['pdf_downloads'][$token] = $pdfStore->store(
+            $pdfReportGenerator->generate($pdfHtml),
+            $result->filename,
+        );
         $sendHtml($renderer->render('report', [
             'result' => $result,
             'unifiedReportHtml' => $unifiedReportHtml,
+            'pdfDownloadUrl' => '/report/pdf?token=' . rawurlencode($token),
         ]));
     }
 

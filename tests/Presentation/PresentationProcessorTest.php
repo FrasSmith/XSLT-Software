@@ -45,6 +45,7 @@ final class PresentationProcessorTest extends TestCase
         self::assertSame(1, $result->review['summary']['images']);
         self::assertSame(1, $result->review['summary']['errors']);
         self::assertSame('image.alt.missing', $result->review['slides'][0]['findings'][0]['code']);
+        self::assertSame('../media/image1.png', $result->slides[0]['images'][0]['filename']);
         self::assertSame('../media/image1.png', $result->review['slides'][0]['findings'][0]['filename']);
         self::assertJson(json_encode($result, JSON_THROW_ON_ERROR));
         self::assertFileExists($this->presentationPath);

@@ -16,6 +16,21 @@
     padding: 1em;
     margin-bottom: 1em;
     border: 1px solid #cdcecf;
+    line-height: 1.25;
+}
+.slide-item > h1,
+.slide-item > h2,
+.slide-item > h3,
+.slide-item > h4 {
+    margin-bottom: 0.5rem;
+}
+.slide-item > p {
+    margin-bottom: 0.35rem;
+}
+.slide-item > ul,
+.slide-item > ol {
+    margin-top: 0.2rem;
+    margin-bottom: 0.35rem;
 }
 
 .slide-item h5 {
@@ -52,9 +67,7 @@ span.italic {
     font-size: 16pt;
     font-weight: bold;
 }
-ul.lvl0 {
 
-}
 ul.lvl1 {
     margin-left: 10pt;
 }
@@ -146,12 +159,27 @@ span.italic {
 }
 .review-finding.error {
     border-left: 0.4rem solid #b42318;
+    background: #fef3f2;
 }
 .review-finding.warning {
     border-left: 0.4rem solid #b54708;
+    background: #fffaeb;
 }
 .review-finding.information {
     border-left: 0.4rem solid #027a48;
+    background: #ecfdf3;
+}
+.review-finding {
+    line-height: 1.25;
+}
+.review-finding h5 {
+    margin-bottom: 0.4rem;
+}
+.review-finding p {
+    margin-bottom: 0.35rem;
+}
+.review-finding p:last-child {
+    margin-bottom: 0;
 }
 .review-score {
     font-weight: bold;

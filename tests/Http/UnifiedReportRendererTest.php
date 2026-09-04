@@ -12,8 +12,9 @@ final class UnifiedReportRendererTest extends TestCase
     public function testItPlacesAReviewImmediatelyAfterItsImageAndEscapesValues(): void
     {
         $report = '<p class="lead">Total slides: 1</p><div class="slide-item">'
-            . '<h1>Slide 1</h1><p>Visible content</p><div class="image-object"><p>Image details</p></div>'
-            . '<p>Content after image</p></div>';
+            . '<h1>Slide 1</h1><p>Visible content</p><div class="image-object"><p>'
+            . '<strong>Image:</strong> ../media/image1.png<br><strong>Description/Alt-text:</strong> '
+            . '&lt;unsafe description&gt;</p></div><p>Content after image</p></div>'; 
         $review = ['slides' => [[
             'findings' => [[
                 'imageNumber' => 1,
@@ -31,8 +32,10 @@ final class UnifiedReportRendererTest extends TestCase
 
         $html = (new UnifiedReportRenderer())->render($report, $review);
 
-        self::assertStringContainsString('&lt;unsafe description&gt;', $html);
+        self::assertSame(1, substr_count($html, '&lt;unsafe description&gt;'));
         self::assertStringNotContainsString('<unsafe description>', $html);
+        self::assertStringNotContainsString('<strong>File:</strong>', $html);
+        self::assertStringNotContainsString('<strong>Alt text:</strong>', $html);
         self::assertStringContainsString('review-finding warning', $html);
         self::assertLessThan(
             strpos($html, 'Content after image'),
@@ -40,7 +43,7 @@ final class UnifiedReportRendererTest extends TestCase
         );
         self::assertLessThan(
             strpos($html, 'Review this image.'),
-            strpos($html, 'Image details'),
+            strpos($html, 'Description/Alt-text:'),
         );
     }
 

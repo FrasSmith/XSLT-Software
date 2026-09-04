@@ -59,7 +59,7 @@ final class ReportParser
             if ($imageNodes !== false) {
                 foreach ($imageNodes as $imageNode) {
                     $value = $this->readableText($imageNode);
-                    preg_match('/^Image:\s*(.*?)\s*Description:\s*(.*)$/s', $value, $matches);
+                    preg_match('/^Image:\s*(.*?)\s*Description\/Alt-text:\s*(.*)$/s', $value, $matches);
                     $images[] = [
                         'filename' => trim($matches[1] ?? ''),
                         'description' => trim($matches[2] ?? ''),

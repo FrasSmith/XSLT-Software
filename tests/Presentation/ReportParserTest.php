@@ -14,7 +14,7 @@ final class ReportParserTest extends TestCase
         $html = '<p class="lead">Total slides: 1</p>'
             . '<div class="slide-item"><h1>Slide 1</h1><p>Hello</p>'
             . '<div class="image-object"><p><strong>Image:</strong> ../media/image1.png<br>'
-            . '<span><strong>Description:</strong> A useful chart</span></p></div></div>';
+            . '<span><strong>Description/Alt-text:</strong> A useful chart</span></p></div></div>';
 
         $slides = (new ReportParser())->parseSlides($html);
 
@@ -30,12 +30,12 @@ final class ReportParserTest extends TestCase
         $html = '<div class="slide-item"><h1>Writer’s notes</h1>'
             . '<p>Slide With<br>Monalisa Photo</p>'
             . '<div class="image-object"><p><strong>Image:</strong> image.png<br>'
-            . '<span><strong>Description:</strong> “Revenue” increased sharply</span></p></div></div>';
+            . '<span><strong>Description/Alt-text:</strong> “Revenue” increased sharply</span></p></div></div>';
 
         $slides = (new ReportParser())->parseSlides($html);
 
         self::assertSame(
-            'Writer’s notes Slide With Monalisa Photo Image: image.png Description: “Revenue” increased sharply',
+            'Writer’s notes Slide With Monalisa Photo Image: image.png Description/Alt-text: “Revenue” increased sharply',
             $slides[0]['text'],
         );
         self::assertSame('“Revenue” increased sharply', $slides[0]['images'][0]['description']);

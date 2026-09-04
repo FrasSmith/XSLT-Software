@@ -257,9 +257,9 @@
             <p><strong>Image: </strong>
                 <xsl:text> </xsl:text>
                 <xsl:value-of
-                    select="$slide.rels.node//*[name() = 'Relationship'][@Id = $id]/@Target"/>
+                    select="$slide.rels.node//z:Relationship[@Id = $id]/@Target"/>
                 <br />
-                <span class="text-muted"><strong>Description: </strong>
+                <span class="text-muted"><strong>Description/Alt-text: </strong>
                 <xsl:value-of select="p:nvPicPr/p:cNvPr/@descr"/></span>
             </p>
         </div>
