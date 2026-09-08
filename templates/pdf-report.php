@@ -6,14 +6,18 @@
  * @var \Effortmark\PptxChecker\Presentation\AnalysisResult $result
  * @var string $unifiedReportHtml
  */
-$summary = $result->review['summary'];
-$summaryBoxes = [
-    'images' => ['label' => 'Images', 'style' => 'neutral'],
-    'errors' => ['label' => 'Errors', 'style' => 'error'],
-    'warnings' => ['label' => 'Warnings', 'style' => 'warning'],
-    'passed' => ['label' => 'Passed', 'style' => 'success'],
-    'excluded' => ['label' => 'Decorative', 'style' => 'neutral'],
-];
+$missingImages = [];
+foreach ($result->review['slides'] as $slide) {
+    foreach ($slide['findings'] as $finding) {
+        if (($finding['code'] ?? '') === 'image.alt.missing') {
+            $missingImages[] = [
+                'slide' => (int) $slide['number'],
+                'image' => (int) ($finding['imageNumber'] ?? 0),
+                'filename' => (string) ($finding['filename'] ?? ''),
+            ];
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en-gb">
@@ -29,13 +33,12 @@ $summaryBoxes = [
         p { margin: 0 0 3mm; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 2mm; border: 1px solid #555; }
-        .review-summary { display: table; width: 100%; margin: 5mm 0; border-collapse: separate; border-spacing: 1.5mm 0; table-layout: fixed; }
-        .review-count { display: table-cell; width: 20%; padding: 1.5mm; border: 1px solid #aaa; border-left-width: 2mm; font-size: 8.5pt; vertical-align: top; }
-        .review-count strong { display: block; font-size: 14pt; }
-        .review-count.error { border-left-color: #b42318; background: #fef3f2; }
-        .review-count.warning { border-left-color: #b54708; background: #fffaeb; }
-        .review-count.success { border-left-color: #027a48; background: #ecfdf3; }
-        .review-count.neutral { border-left-color: #667085; background: #f8f9fa; }
+        th, .tableRowFirst th, .tableRowFirst td { font-weight: bold; }
+        .review-overview { margin: 5mm 0; padding: 3mm; border: 1px solid #aaa; border-left-width: 3mm; }
+        .review-overview.error { border-left-color: #b42318; background: #fef3f2; }
+
+        .review-overview.neutral { border-left-color: #667085; background: #f8f9fa; }
+        .review-overview ul { margin-bottom: 0; }
         .slide-item { margin: 0 0 6mm; padding: 4mm; border: 1px solid #aaa; line-height: 1.2; }
         .slide-item > h1, .slide-item > h2, .slide-item > h3, .slide-item > h4 { margin-bottom: 1.5mm; }
         .slide-item > p { margin-bottom: 1.2mm; }
@@ -50,32 +53,33 @@ $summaryBoxes = [
         .review-finding.warning { border-left: 3mm solid #b54708; background: #fffaeb; }
         .review-finding.information { border-left: 3mm solid #027a48; background: #ecfdf3; }
         .review-empty { border-left: 3mm solid #667085; background: #f8f9fa; }
-        .review-score-ranges { margin: 3mm 0; padding-left: 6mm; }
-        .review-score { font-weight: bold; }
+
         ul { margin-top: 1mm; margin-bottom: 2mm; }
     </style>
 </head>
 <body>
     <h1><?= htmlspecialchars($result->filename, ENT_QUOTES, 'UTF-8') ?></h1>
     <section>
-        <h2>Presentation review</h2>
-        <p>This automated review checks image alternative text using deterministic rules. Relevance scores measure textual connections and do not prove that a description is correct or incorrect.</p>
-        <ul class="review-score-ranges">
-            <li><strong>70–100:</strong> strong evidence</li>
-            <li><strong>35–69:</strong> some evidence</li>
-            <li><strong>0–34:</strong> manual review recommended</li>
-        </ul>
-        <div class="review-summary">
-            <?php foreach ($summaryBoxes as $key => $box): ?>
-                <?php
-                $count = (int) ($summary[$key] ?? 0);
-                $style = $count === 0 ? 'neutral' : $box['style'];
-                ?>
-                <span class="review-count <?= htmlspecialchars($style, ENT_QUOTES, 'UTF-8') ?>">
-                    <strong><?= $count ?></strong><?= htmlspecialchars($box['label'], ENT_QUOTES, 'UTF-8') ?>
-                </span>
-            <?php endforeach; ?>
-        </div>
+        <?php if ((int) $result->review['summary']['images'] === 0): ?>
+            <h2>Presentation review</h2>
+            <div class="review-overview neutral">
+                <strong>No images were found in the presentation.</strong>
+            </div>
+        <?php elseif ($missingImages !== []): ?>
+            <h2>Presentation review</h2>
+            <div class="review-overview error">
+                <strong>The following images have missing descriptions/alt text</strong>
+                <ul>
+                    <?php foreach ($missingImages as $image): ?>
+                        <li>
+                            Slide <?= $image['slide'] ?>, image <?= $image['image'] ?><?php if ($image['filename'] !== ''): ?>:
+                                <?= htmlspecialchars($image['filename'], ENT_QUOTES, 'UTF-8') ?>
+                            <?php endif; ?>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
         <?= $unifiedReportHtml ?>
     </section>
 </body>

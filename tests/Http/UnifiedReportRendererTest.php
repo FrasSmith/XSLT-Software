@@ -20,8 +20,9 @@ final class UnifiedReportRendererTest extends TestCase
                 'imageNumber' => 1,
                 'filename' => '../media/image1.png',
                 'description' => '<unsafe description>',
-                'severity' => 'warning',
-                'status' => 'review_recommended',
+                'code' => 'image.alt.missing',
+                'severity' => 'error',
+                'status' => 'missing',
                 'score' => 20,
                 'message' => 'Review this image.',
                 'recommendation' => 'Check the context.',
@@ -36,7 +37,7 @@ final class UnifiedReportRendererTest extends TestCase
         self::assertStringNotContainsString('<unsafe description>', $html);
         self::assertStringNotContainsString('<strong>File:</strong>', $html);
         self::assertStringNotContainsString('<strong>Alt text:</strong>', $html);
-        self::assertStringContainsString('review-finding warning', $html);
+        self::assertStringContainsString('review-finding error', $html);
         self::assertLessThan(
             strpos($html, 'Content after image'),
             strpos($html, 'Review this image.'),
@@ -57,13 +58,13 @@ final class UnifiedReportRendererTest extends TestCase
         self::assertStringNotContainsString('â', $html);
     }
 
-    public function testItMarksSlidesThatHaveNoImages(): void
+    public function testItDoesNotAddBoxesToSlidesWithoutMissingAltText(): void
     {
         $report = '<div class="slide-item"><h1>Slide 1</h1><p>Text only</p></div>';
 
         $html = (new UnifiedReportRenderer())->render($report, ['slides' => [['findings' => []]]]);
 
-        self::assertStringContainsString('No images to review.', $html);
-        self::assertStringContainsString('review-empty', $html);
+        self::assertStringNotContainsString('review-finding', $html);
+        self::assertStringNotContainsString('review-empty', $html);
     }
 }

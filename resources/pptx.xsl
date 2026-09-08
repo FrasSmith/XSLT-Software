@@ -193,8 +193,34 @@
                     <xsl:attribute name="href">
                         <xsl:value-of select="$slide.rels.node/*/*[@Id = $linkId]/@Target"/>
                     </xsl:attribute>
-                    <xsl:apply-templates/>
+                    <xsl:call-template name="styled-run">
+                        <xsl:with-param name="font-weight" select="$font-weight"/>
+                        <xsl:with-param name="font-style" select="$font-style"/>
+                    </xsl:call-template>
                 </a>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:call-template name="styled-run">
+                    <xsl:with-param name="font-weight" select="$font-weight"/>
+                    <xsl:with-param name="font-style" select="$font-style"/>
+                </xsl:call-template>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:template>
+
+    <!-- Preserve explicit and inherited run formatting as semantic HTML. -->
+    <xsl:template name="styled-run">
+        <xsl:param name="font-weight"/>
+        <xsl:param name="font-style"/>
+        <xsl:choose>
+            <xsl:when test="$font-weight = 'bold' and $font-style = 'italic'">
+                <strong><em><xsl:apply-templates/></em></strong>
+            </xsl:when>
+            <xsl:when test="$font-weight = 'bold'">
+                <strong><xsl:apply-templates/></strong>
+            </xsl:when>
+            <xsl:when test="$font-style = 'italic'">
+                <em><xsl:apply-templates/></em>
             </xsl:when>
             <xsl:otherwise>
                 <xsl:apply-templates/>

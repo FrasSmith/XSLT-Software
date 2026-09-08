@@ -7,6 +7,16 @@
 }
 
 /* Forms */
+.automatic-pdf-download {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    border: 0;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+}
+
 .form-container {
     padding: 1em;
     background: rgba(0,0,0,.05);
@@ -37,16 +47,16 @@
     border-bottom: 1px solid #cdcecf;
     padding-bottom: 4px;
 }
-table {
+.slide-item table {
     width: 100%;
     border: 1px solid black;
     border-collapse: collapse;
 }
-th,
-td {
+.slide-item .table th,
+.slide-item .table td {
     border: 1px solid black;
     border-collapse: collapse;
-    padding: 5pt;
+    padding: 0.5em;
 }
 
 span.bold {
@@ -81,21 +91,12 @@ ul.lvl4 {
     margin-left: 40pt;
 }
 
-table {
-    width: 100%;
-    border: 1px solid black;
-    border-collapse: collapse;
-}
-th,
-td {
-    border: 1px solid black;
-    border-collapse: collapse;
-    padding: 0.5em;
-}
-.tableRowFirst {
-    background-color: #e48a53;
-    color: #FFFFFF
 
+.tableRowFirst th,
+.tableRowFirst td {
+    color: #212529;
+    font-weight: bold;
+    background: #FFFFFF;
 }
 span.bold {
     font-weight: bold;
@@ -109,6 +110,27 @@ span.italic {
 .image-object {
     border-top: 1px solid #ddd;
     padding-top: 0.2em;
+}
+
+.review-overview {
+    width: 100%;
+    padding: 1rem;
+    margin: 1rem 0 1.5rem;
+    border: 1px solid #cdcecf;
+    border-left-width: 0.4rem;
+    border-radius: 0.25rem;
+}
+.review-overview.error {
+    border-left-color: #b42318;
+    background: #fef3f2;
+}
+
+.review-overview.neutral {
+    border-left-color: #667085;
+    background: #f8f9fa;
+}
+.review-overview ul {
+    margin: 0.5rem 0 0;
 }
 
 .review-summary {

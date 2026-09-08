@@ -27,8 +27,7 @@ The principal responsibilities are:
 
 - `PresentationProcessor` owns input validation, ZIP/XML limits, temporary-file isolation, orchestration, XSLT security, and cleanup.
 - `PresentationInspector` reads semantic information directly from OOXML before the XSLT discards metadata needed for accessibility checks.
-- `AccessibilityReviewer` applies explainable, non-AI alt-text rules and relevance scoring.
-- `EnglishTextNormalizer` provides the deliberately conservative English token matching used by the reviewer.
+- `AccessibilityReviewer` reports non-decorative images whose description/alt-text field is empty.
 - `ReportParser` adapts the legacy XSLT HTML into the original structured API fields; it is not the source of accessibility findings.
 - `AnalysisResult` combines the original report fields with the additive `review` object used by the HTML and JSON outputs.
 
@@ -61,7 +60,7 @@ Open `http://127.0.0.1:8080/` to use the browser upload form.
 
 `GET /` displays the upload form. The form submits a `.pptx` file to `POST /report`, which returns an accessibility review followed by the existing XSLT-generated content report.
 
-The HTML result page also provides a one-time PDF download link. PDFs use A4 portrait layout, are stored as private temporary files, expire after 15 minutes, and are deleted immediately after a successful download. The download link is not included in the PDF or JSON API response.
+The upload form can optionally generate an A4 portrait PDF alongside the HTML report. When selected, the browser starts the PDF download automatically after the HTML results load; no PDF control is displayed on the result page. PDFs are stored as private temporary files, expire after 15 minutes, and are deleted immediately after the one-time download. PDF generation is not available through the JSON API.
 
 ### JSON API
 
@@ -85,7 +84,7 @@ A successful response contains both the compatible HTML report and structured sl
       "images": [
         {
           "filename": "../media/image1.png",
-          "description": "Description from PowerPoint"
+          "description": ""
         }
       ]
     }
@@ -93,9 +92,9 @@ A successful response contains both the compatible HTML report and structured sl
   "review": {
     "summary": {
       "images": 1,
-      "errors": 0,
+      "errors": 1,
       "warnings": 0,
-      "passed": 1,
+      "passed": 0,
       "excluded": 0
     },
     "slides": [
@@ -104,12 +103,13 @@ A successful response contains both the compatible HTML report and structured sl
         "title": "Quarterly revenue",
         "findings": [
           {
-            "code": "image.alt.relevance.strong",
-            "status": "possibly_relevant",
-            "severity": "information",
-            "score": 83,
-            "matchedTitleTerms": ["revenue"],
-            "matchedBodyTerms": ["increase", "18"]
+            "imageNumber": 1,
+            "filename": "../media/image1.png",
+            "description": "",
+            "code": "image.alt.missing",
+            "status": "missing",
+            "severity": "error",
+            "score": null
           }
         ]
       }
@@ -124,16 +124,7 @@ The API is currently unauthenticated. Production deployments should add authenti
 
 ## Accessibility review
 
-The deterministic review does not use an AI model or external service. It:
-
-- excludes pictures marked as decorative in PowerPoint;
-- reports missing or generic/filename-only alt text as errors;
-- compares meaningful English alt-text terms with the slide title and visible text;
-- gives title matches more weight than body matches;
-- supports a small internal synonym list; and
-- reports a numeric score with the terms that contributed to it.
-
-Scores of 70 or more indicate strong textual evidence, 35–69 indicate some evidence, and scores below 35 request manual review. A low score is not proof that alt text is irrelevant: accurate descriptions often mention visual information that does not occur elsewhere on the slide.
+The simplified deterministic review does not use an AI model or external service. It reports only non-decorative images whose PowerPoint description/alt-text field is empty. Images with any description are not scored or shown in an in-slide review box. Decorative images are counted as images but do not require alt text.
 
 ## Configuration
 

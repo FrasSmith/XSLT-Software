@@ -109,19 +109,25 @@ try {
         $upload = UploadedPresentation::fromFiles($_FILES);
         $result = $processor->process($upload->temporaryPath, $upload->originalFilename);
         $unifiedReportHtml = $unifiedReportRenderer->render($result->reportHtml, $result->review);
-        $pdfHtml = $renderer->render('pdf-report', [
-            'result' => $result,
-            'unifiedReportHtml' => $unifiedReportHtml,
-        ]);
-        $token = bin2hex(random_bytes(32));
-        $_SESSION['pdf_downloads'][$token] = $pdfStore->store(
-            $pdfReportGenerator->generate($pdfHtml),
-            $result->filename,
-        );
+        $automaticPdfDownloadUrl = null;
+
+        if ((string) ($_POST['generate_pdf'] ?? '') === '1') {
+            $pdfHtml = $renderer->render('pdf-report', [
+                'result' => $result,
+                'unifiedReportHtml' => $unifiedReportHtml,
+            ]);
+            $token = bin2hex(random_bytes(32));
+            $_SESSION['pdf_downloads'][$token] = $pdfStore->store(
+                $pdfReportGenerator->generate($pdfHtml),
+                $result->filename,
+            );
+            $automaticPdfDownloadUrl = '/report/pdf?token=' . rawurlencode($token);
+        }
+
         $sendHtml($renderer->render('report', [
             'result' => $result,
             'unifiedReportHtml' => $unifiedReportHtml,
-            'pdfDownloadUrl' => '/report/pdf?token=' . rawurlencode($token),
+            'automaticPdfDownloadUrl' => $automaticPdfDownloadUrl,
         ]));
     }
 

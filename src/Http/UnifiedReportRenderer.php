@@ -62,27 +62,29 @@ final class UnifiedReportRenderer
             $imageNodes = $xpath->query(".//*[contains(concat(' ', normalize-space(@class), ' '), ' image-object ')]", $slideNode);
             $images = $imageNodes === false ? [] : iterator_to_array($imageNodes);
 
-            if ($images === []) {
-                $message = $document->createElement('p');
-                $message->setAttribute('class', 'review-empty');
-                $message->appendChild($document->createTextNode('No images to review.'));
-                $slideNode->appendChild($message);
-                continue;
-            }
-
-            foreach ($images as $imageIndex => $imageNode) {
-                if (!$imageNode instanceof DOMElement || !isset($findings[$imageIndex]) || !is_array($findings[$imageIndex])) {
+            foreach ($findings as $finding) {
+                if (!is_array($finding) || ($finding['code'] ?? '') !== 'image.alt.missing') {
                     continue;
                 }
-                $finding = $this->createFinding($document, $findings[$imageIndex]);
-                $slideNode->insertBefore($finding, $imageNode->nextSibling);
+
+                $imageIndex = (int) ($finding['imageNumber'] ?? 0) - 1;
+                $imageNode = $images[$imageIndex] ?? null;
+                if (!$imageNode instanceof DOMElement) {
+                    continue;
+                }
+
+                $slideNode->insertBefore($this->createFinding($document, $finding), $imageNode->nextSibling);
             }
         }
 
         return $this->innerHtml($document, $root);
     }
 
-    /** Creates the visual finding box while ensuring uploaded values remain text. */
+    /**
+     * Creates the visual finding box while ensuring uploaded values remain text.
+     *
+     * @param array<string, mixed> $finding
+     */
     private function createFinding(DOMDocument $document, array $finding): DOMElement
     {
         $severity = in_array($finding['severity'] ?? '', ['error', 'warning', 'information'], true)

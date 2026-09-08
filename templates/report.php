@@ -8,8 +8,20 @@
  *
  * @var \Effortmark\PptxChecker\Presentation\AnalysisResult $result
  * @var string $unifiedReportHtml
- * @var string $pdfDownloadUrl
+ * @var string|null $automaticPdfDownloadUrl
  */
+$missingImages = [];
+foreach ($result->review['slides'] as $slide) {
+    foreach ($slide['findings'] as $finding) {
+        if (($finding['code'] ?? '') === 'image.alt.missing') {
+            $missingImages[] = [
+                'slide' => (int) $slide['number'],
+                'image' => (int) ($finding['imageNumber'] ?? 0),
+                'filename' => (string) ($finding['filename'] ?? ''),
+            ];
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en-gb">
@@ -26,43 +38,39 @@
 </nav>
 <main class="container" role="main">
     <h1><?= htmlspecialchars($result->filename, ENT_QUOTES, 'UTF-8') ?></h1>
-    <p class="report-download">
-        <a class="btn btn-primary" href="<?= htmlspecialchars($pdfDownloadUrl, ENT_QUOTES, 'UTF-8') ?>">Download PDF report</a>
-        <small class="text-muted">This temporary link expires after 15 minutes and can be used once.</small>
-    </p>
 
-    <section aria-labelledby="review-heading">
-        <h2 id="review-heading">Presentation review</h2>
-        <p>This automated review checks image alternative text using deterministic rules. Relevance scores measure textual connections and do not prove that a description is correct or incorrect.</p>
-        <ul class="review-score-ranges" aria-label="Relevance score ranges">
-            <li class="information"><strong>70–100:</strong> strong evidence</li>
-            <li class="information"><strong>35–69:</strong> some evidence</li>
-            <li class="warning"><strong>0–34:</strong> manual review recommended</li>
-        </ul>
-        <div class="review-summary" aria-label="Review summary">
-            <?php
-            $summaryBoxes = [
-                'images' => ['label' => 'Images', 'style' => 'neutral'],
-                'errors' => ['label' => 'Errors', 'style' => 'error'],
-                'warnings' => ['label' => 'Warnings', 'style' => 'warning'],
-                'passed' => ['label' => 'Passed checks', 'style' => 'success'],
-                'excluded' => ['label' => 'Decorative', 'style' => 'neutral'],
-            ];
-            ?>
-            <?php foreach ($summaryBoxes as $key => $box): ?>
-                <?php
-                $count = (int) $result->review['summary'][$key];
-                $style = $count === 0 ? 'neutral' : $box['style'];
-                ?>
-                <div class="review-count <?= htmlspecialchars($style, ENT_QUOTES, 'UTF-8') ?>">
-                    <strong><?= $count ?></strong>
-                    <?= htmlspecialchars($box['label'], ENT_QUOTES, 'UTF-8') ?>
-                </div>
-            <?php endforeach; ?>
-        </div>
+    <section>
+        <?php if ((int) $result->review['summary']['images'] === 0): ?>
+            <h2>Presentation review</h2>
+            <div class="review-overview neutral" role="status">
+                <strong>No images were found in the presentation.</strong>
+            </div>
+        <?php elseif ($missingImages !== []): ?>
+            <h2>Presentation review</h2>
+            <div class="review-overview error" role="alert">
+                <strong>The following images have missing descriptions/alt text</strong>
+                <ul>
+                    <?php foreach ($missingImages as $image): ?>
+                        <li>
+                            Slide <?= $image['slide'] ?>, image <?= $image['image'] ?><?php if ($image['filename'] !== ''): ?>:
+                                <?= htmlspecialchars($image['filename'], ENT_QUOTES, 'UTF-8') ?>
+                            <?php endif; ?>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
 
         <?= $unifiedReportHtml ?>
     </section>
 </main>
+<?php if ($automaticPdfDownloadUrl !== null): ?>
+    <iframe
+        class="automatic-pdf-download"
+        src="<?= htmlspecialchars($automaticPdfDownloadUrl, ENT_QUOTES, 'UTF-8') ?>"
+        title="Automatic PDF report download"
+        aria-hidden="true"
+    ></iframe>
+<?php endif; ?>
 </body>
 </html>
