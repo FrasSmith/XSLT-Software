@@ -9,6 +9,7 @@
  * @var \Effortmark\PptxChecker\Presentation\AnalysisResult $result
  * @var string $unifiedReportHtml
  * @var string|null $automaticPdfDownloadUrl
+ * @var string $basePath
  */
 $missingImages = [];
 foreach ($result->review['slides'] as $slide) {
@@ -30,11 +31,11 @@ foreach ($result->review['slides'] as $slide) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= htmlspecialchars($result->filename, ENT_QUOTES, 'UTF-8') ?> – PPTX Checker</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/assets/main.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/assets/main.css">
 </head>
 <body>
 <nav class="navbar navbar-dark bg-dark" aria-label="PowerPoint Checker options">
-    <a href="/" class="navbar-brand">PPTX-Checker</a>
+    <a href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/" class="navbar-brand">PPTX-Checker</a>
 </nav>
 <main class="container" role="main">
     <h1><?= htmlspecialchars($result->filename, ENT_QUOTES, 'UTF-8') ?></h1>

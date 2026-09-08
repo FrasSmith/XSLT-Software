@@ -19,7 +19,23 @@ use Effortmark\PptxChecker\Presentation\PresentationProcessor;
 use Effortmark\PptxChecker\Presentation\ProcessingException;
 use Effortmark\PptxChecker\Presentation\ProcessingLimits;
 
-require dirname(__DIR__) . '/vendor/autoload.php';
+$configuration = [
+    'applicationRoot' => dirname(__DIR__),
+    'basePath' => '',
+];
+$deploymentConfiguration = __DIR__ . '/deployment.php';
+if (is_file($deploymentConfiguration)) {
+    $overrides = require $deploymentConfiguration;
+    if (!is_array($overrides)) {
+        throw new RuntimeException('The deployment configuration must return an array.');
+    }
+    $configuration = array_replace($configuration, $overrides);
+}
+
+$applicationRoot = rtrim((string) $configuration['applicationRoot'], DIRECTORY_SEPARATOR);
+$basePath = '/' . trim((string) $configuration['basePath'], '/');
+$basePath = $basePath === '/' ? '' : $basePath;
+require $applicationRoot . '/vendor/autoload.php';
 
 // The browser form uses a session-backed CSRF token; API clients authenticate
 // independently at the deployment layer and therefore do not use browser sessions.
@@ -27,10 +43,15 @@ session_set_cookie_params([
     'httponly' => true,
     'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
     'samesite' => 'Lax',
+    'path' => $basePath === '' ? '/' : $basePath . '/',
 ]);
 session_start();
 
-$renderer = new TemplateRenderer(dirname(__DIR__) . '/templates');
+$renderer = new TemplateRenderer($applicationRoot . '/templates');
+$renderTemplate = static fn (string $template, array $data = []): string => $renderer->render(
+    $template,
+    ['basePath' => $basePath] + $data,
+);
 $unifiedReportRenderer = new UnifiedReportRenderer();
 $pdfReportGenerator = new PdfReportGenerator();
 $pdfStore = new TemporaryPdfStore();
@@ -44,9 +65,17 @@ $limits = new ProcessingLimits(
     maximumExpandedBytes: (int) (getenv('PPTX_MAX_EXPANDED_BYTES') ?: 524_288_000),
     maximumXmlEntryBytes: (int) (getenv('PPTX_MAX_XML_ENTRY_BYTES') ?: 52_428_800),
 );
-$processor = new PresentationProcessor(dirname(__DIR__) . '/resources/pptx.xsl', $limits);
+$processor = new PresentationProcessor($applicationRoot . '/resources/pptx.xsl', $limits);
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-$path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$path = $requestPath;
+if ($basePath !== '') {
+    if ($requestPath === $basePath || $requestPath === $basePath . '/') {
+        $path = '/';
+    } elseif (str_starts_with($requestPath, $basePath . '/')) {
+        $path = substr($requestPath, strlen($basePath));
+    }
+}
 
 /** Sends a complete HTML response and stops route processing. */
 $sendHtml = static function (string $html, int $status = 200): never {
@@ -96,7 +125,7 @@ try {
 
     if ($method === 'GET' && $path === '/') {
         $_SESSION['csrf_token'] ??= bin2hex(random_bytes(32));
-        $sendHtml($renderer->render('index', ['csrfToken' => $_SESSION['csrf_token']]));
+        $sendHtml($renderTemplate('index', ['csrfToken' => $_SESSION['csrf_token']]));
     }
 
     if ($method === 'POST' && $path === '/report') {
@@ -112,7 +141,7 @@ try {
         $automaticPdfDownloadUrl = null;
 
         if ((string) ($_POST['generate_pdf'] ?? '') === '1') {
-            $pdfHtml = $renderer->render('pdf-report', [
+            $pdfHtml = $renderTemplate('pdf-report', [
                 'result' => $result,
                 'unifiedReportHtml' => $unifiedReportHtml,
             ]);
@@ -121,10 +150,10 @@ try {
                 $pdfReportGenerator->generate($pdfHtml),
                 $result->filename,
             );
-            $automaticPdfDownloadUrl = '/report/pdf?token=' . rawurlencode($token);
+            $automaticPdfDownloadUrl = $basePath . '/report/pdf?token=' . rawurlencode($token);
         }
 
-        $sendHtml($renderer->render('report', [
+        $sendHtml($renderTemplate('report', [
             'result' => $result,
             'unifiedReportHtml' => $unifiedReportHtml,
             'automaticPdfDownloadUrl' => $automaticPdfDownloadUrl,
@@ -141,16 +170,16 @@ try {
         $sendJson(['error' => 'Endpoint not found.'], 404);
     }
 
-    $sendHtml($renderer->render('error', ['message' => 'Page not found.']), 404);
+    $sendHtml($renderTemplate('error', ['message' => 'Page not found.']), 404);
 } catch (ProcessingException $exception) {
     if (str_starts_with($path, '/api/')) {
         $sendJson(['error' => $exception->getMessage()], 422);
     }
-    $sendHtml($renderer->render('error', ['message' => $exception->getMessage()]), 422);
+    $sendHtml($renderTemplate('error', ['message' => $exception->getMessage()]), 422);
 } catch (Throwable $exception) {
     error_log($exception->__toString());
     if (str_starts_with($path, '/api/')) {
         $sendJson(['error' => 'An unexpected error occurred.'], 500);
     }
-    $sendHtml($renderer->render('error', ['message' => 'An unexpected error occurred.']), 500);
+    $sendHtml($renderTemplate('error', ['message' => 'An unexpected error occurred.']), 500);
 }

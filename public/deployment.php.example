@@ -1,0 +1,15 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Copy this file to deployment.php in the public SFTP directory.
+ *
+ * Expected Mythic Beasts layout:
+ *   /home/USERNAME/apps/pptx-checker
+ *   /home/USERNAME/www/DOMAIN/pptx-checker/deployment.php
+ */
+return [
+    'applicationRoot' => dirname(__DIR__, 3) . '/apps/pptx-checker',
+    'basePath' => '/pptx-checker',
+];

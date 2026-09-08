@@ -14,11 +14,14 @@ final class ReportTemplateTest extends TestCase
     {
         $html = (new TemplateRenderer(dirname(__DIR__, 2) . '/templates'))->render('index', [
             'csrfToken' => 'test-token',
+            'basePath' => '/pptx-checker',
         ]);
 
         self::assertStringContainsString('type="checkbox"', $html);
         self::assertStringContainsString('name="generate_pdf"', $html);
         self::assertStringContainsString('Also generate a PDF report', $html);
+        self::assertStringContainsString('action="/pptx-checker/report"', $html);
+        self::assertStringContainsString('href="/pptx-checker/assets/main.css"', $html);
     }
 
     public function testItAutomaticallyDownloadsPdfWithoutShowingAButtonWhenRequested(): void
@@ -116,6 +119,7 @@ final class ReportTemplateTest extends TestCase
             'result' => $result,
             'unifiedReportHtml' => '<div class="slide-item">Slide content</div>',
             'automaticPdfDownloadUrl' => $automaticPdfDownloadUrl,
+            'basePath' => '/pptx-checker',
         ]);
     }
 }

@@ -1,0 +1,27 @@
+<?php
+
+declare(strict_types=1);
+
+header('Content-Type: text/plain; charset=UTF-8');
+
+echo 'PHP version: ' . PHP_VERSION . PHP_EOL;
+echo PHP_EOL;
+
+foreach (['dom', 'json', 'libxml', 'xsl', 'zip', 'mbstring'] as $extension) {
+    printf(
+        "%-12s %s\n",
+        $extension,
+        extension_loaded($extension) ? 'available' : 'MISSING',
+    );
+}
+
+echo PHP_EOL;
+echo 'Temporary directory: ' . sys_get_temp_dir() . PHP_EOL;
+echo 'Temporary directory writable: '
+    . (is_writable(sys_get_temp_dir()) ? 'yes' : 'NO')
+    . PHP_EOL;
+
+echo 'Session save path: ' . session_save_path() . PHP_EOL;
+echo 'Memory limit: ' . ini_get('memory_limit') . PHP_EOL;
+echo 'Upload limit: ' . ini_get('upload_max_filesize') . PHP_EOL;
+echo 'POST limit: ' . ini_get('post_max_size') . PHP_EOL;

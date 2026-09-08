@@ -1,0 +1,87 @@
+<?php
+
+declare(strict_types=1);
+
+error_reporting(E_ALL);
+ini_set('display_errors', '1');
+header('Content-Type: text/plain; charset=UTF-8');
+
+/** @param scalar|null $value */
+function checkLine(string $label, mixed $value): void
+{
+    echo str_pad($label . ':', 34) . (string) $value . PHP_EOL;
+}
+
+checkLine('PHP version', PHP_VERSION);
+checkLine('Public directory', __DIR__);
+checkLine('open_basedir', ini_get('open_basedir') ?: '(not set)');
+checkLine('memory_limit', ini_get('memory_limit'));
+checkLine('upload_max_filesize', ini_get('upload_max_filesize'));
+checkLine('post_max_size', ini_get('post_max_size'));
+echo PHP_EOL;
+
+foreach (['dom', 'json', 'libxml', 'mbstring', 'xsl', 'zip'] as $extension) {
+    checkLine('Extension ' . $extension, extension_loaded($extension) ? 'OK' : 'MISSING');
+}
+
+echo PHP_EOL;
+$deploymentFile = __DIR__ . '/deployment.php';
+checkLine('deployment.php exists', is_file($deploymentFile) ? 'YES' : 'NO');
+checkLine('deployment.php readable', is_readable($deploymentFile) ? 'YES' : 'NO');
+
+$configuration = [
+    'applicationRoot' => dirname(__DIR__),
+    'basePath' => '',
+];
+
+if (is_readable($deploymentFile)) {
+    try {
+        $loaded = require $deploymentFile;
+        if (is_array($loaded)) {
+            $configuration = array_replace($configuration, $loaded);
+            checkLine('deployment.php result', 'valid array');
+        } else {
+            checkLine('deployment.php result', 'INVALID: did not return an array');
+        }
+    } catch (Throwable $exception) {
+        checkLine('deployment.php error', $exception->getMessage());
+    }
+}
+
+$applicationRoot = rtrim((string) ($configuration['applicationRoot'] ?? ''), DIRECTORY_SEPARATOR);
+checkLine('Configured application root', $applicationRoot ?: '(empty)');
+checkLine('Configured base path', (string) ($configuration['basePath'] ?? ''));
+echo PHP_EOL;
+
+$requiredPaths = [
+    'Application directory' => $applicationRoot,
+    'Composer autoloader' => $applicationRoot . '/vendor/autoload.php',
+    'Composer platform check' => $applicationRoot . '/vendor/composer/platform_check.php',
+    'XSLT stylesheet' => $applicationRoot . '/resources/pptx.xsl',
+    'Source directory' => $applicationRoot . '/src',
+    'Template directory' => $applicationRoot . '/templates',
+    'Index template' => $applicationRoot . '/templates/index.php',
+];
+
+foreach ($requiredPaths as $label => $path) {
+    checkLine($label . ' exists', file_exists($path) ? 'YES' : 'NO');
+    checkLine($label . ' readable', is_readable($path) ? 'YES' : 'NO');
+}
+
+echo PHP_EOL;
+$temporaryDirectory = sys_get_temp_dir();
+checkLine('Temporary directory', $temporaryDirectory);
+checkLine('Temporary directory writable', is_writable($temporaryDirectory) ? 'YES' : 'NO');
+$probe = @tempnam($temporaryDirectory, 'pptx-check-');
+checkLine('Temporary file creation', $probe !== false ? 'OK' : 'FAILED');
+if ($probe !== false) {
+    @unlink($probe);
+}
+
+$sessionPath = session_save_path();
+checkLine('Session save path', $sessionPath !== '' ? $sessionPath : '(PHP default)');
+if ($sessionPath !== '') {
+    checkLine('Session path writable', is_writable($sessionPath) ? 'YES' : 'NO');
+}
+
+echo PHP_EOL . 'Delete this diagnostic file after use.' . PHP_EOL;

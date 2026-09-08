@@ -2,4 +2,5 @@
 /.phpunit.cache/
 /.phpunit.result.cache
 /sample-files/
+/public/deployment.php
 .env

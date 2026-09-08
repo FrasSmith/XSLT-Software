@@ -6,6 +6,7 @@
  * improve usability, but all security validation is repeated server-side.
  *
  * @var string $csrfToken
+ * @var string $basePath
  */
 ?>
 <!DOCTYPE html>
@@ -15,17 +16,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>PPTX Checker</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/assets/main.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/assets/main.css">
 </head>
 <body>
 <nav class="navbar navbar-dark bg-dark" aria-label="PowerPoint Checker options">
-    <a href="/" class="navbar-brand">PPTX-Checker</a>
+    <a href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/" class="navbar-brand">PPTX-Checker</a>
 </nav>
 <main class="container" role="main">
     <div class="row">
         <div class="col-md-5 order-md-last">
             <div class="form-container">
-                <form action="/report" method="post" enctype="multipart/form-data">
+                <form action="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>/report" method="post" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars((string) $csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                     <div class="form-group">
                         <label for="file">Upload your PowerPoint presentation</label>

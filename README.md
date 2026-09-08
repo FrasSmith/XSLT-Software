@@ -149,10 +149,23 @@ The processor verifies basic OOXML structure and limits archive entry count, tot
 
 ## XSLT compatibility
 
-`resources/pptx.xsl` is an unchanged copy of the Python application's `app/static/pptx.xsl`. Keeping it unchanged preserves current output, including existing transformation behavior. XSLT improvements should be made and tested as a separate change.
+`resources/pptx.xsl` retains the original transformation structure with fixes for text spacing, list boundaries, relationship lookup, and semantic bold/italic run formatting.
 
 ## Apache
 
-Point the virtual host's `DocumentRoot` at `php-app/public`. The included `public/.htaccess` routes non-file requests to `index.php`; Apache must permit overrides and enable `mod_rewrite`.
+Point the virtual host's `DocumentRoot` at `public/` when server configuration is available. The included `public/.htaccess` routes non-file requests to `index.php`; Apache must permit overrides and enable `mod_rewrite`.
 
 For Nginx or another server, configure a front-controller fallback to `public/index.php`.
+
+## Mythic Beasts SFTP deployment
+
+For deployment at `https://example.com/pptx-checker/` without shell access, use this split layout:
+
+```text
+/home/USERNAME/apps/pptx-checker/{resources,src,templates,vendor}
+/home/USERNAME/www/example.com/pptx-checker/{assets,index.php,.htaccess,.user.ini,deployment.php}
+```
+
+Upload the contents of local `public/`, not the directory itself, into the public `pptx-checker/` directory. Copy `public/deployment.php.example` to `deployment.php` there. The example derives `/home/USERNAME/apps/pptx-checker` from its location and configures `/pptx-checker` as the URL base path, so the hosting username does not need to be hardcoded.
+
+Run `composer install --no-dev --classmap-authoritative` locally and upload the resulting `vendor/` directory to the private application directory. The server does not need to run Composer. `deployment.php` is ignored by Git so environment-specific paths are not committed.
