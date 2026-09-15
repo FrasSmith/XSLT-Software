@@ -25,7 +25,7 @@ final class PresentationInspector
      * Reads slides in numeric order and captures titles, visible text, and pictures.
      * Image binaries are not loaded; their relationship targets identify them.
      *
-     * @return list<array{number: int, title: string, visibleText: string, images: list<array{filename: string, description: string, decorative: bool}>}>
+     * @return list<array{number: int, title: string, visibleText: string, images: list<array{filename: string, description: string, decorative: bool, groupId: string|null}>}>
      */
     public function inspect(DOMDocument $document): array
     {
@@ -65,6 +65,7 @@ final class PresentationInspector
                         'filename' => $this->relationshipTarget($xpath, $document, $number, $relationshipId),
                         'description' => trim($this->firstValue($xpath, './/p:cNvPr/@descr', $pictureNode)),
                         'decorative' => $this->isDecorative($xpath, $pictureNode),
+                        'groupId' => $this->groupId($xpath, $pictureNode, $number),
                     ];
                 }
             }
@@ -107,6 +108,26 @@ final class PresentationInspector
         }
 
         return '';
+    }
+
+    /** Returns a slide-scoped identifier for the outermost containing picture group. */
+    private function groupId(DOMXPath $xpath, DOMElement $picture, int $slideNumber): ?string
+    {
+        $group = null;
+        $ancestor = $picture->parentNode;
+        while ($ancestor instanceof DOMElement) {
+            if ($ancestor->namespaceURI === self::PRESENTATION_NS && $ancestor->localName === 'grpSp') {
+                $group = $ancestor;
+            }
+            $ancestor = $ancestor->parentNode;
+        }
+
+        if (!$group instanceof DOMElement) {
+            return null;
+        }
+
+        $id = $this->firstValue($xpath, './p:nvGrpSpPr/p:cNvPr/@id', $group);
+        return sprintf('slide%d-group-%s', $slideNumber, $id !== '' ? $id : spl_object_id($group));
     }
 
     /**

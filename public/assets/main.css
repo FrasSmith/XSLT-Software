@@ -107,6 +107,16 @@ span.italic {
 
 }
 
+.grouped-images {
+    padding: 0.75rem;
+    margin: 0.5rem 0;
+    border: 2px solid #667085;
+    border-radius: 0.25rem;
+    background: #f8f9fa;
+}
+.grouped-images-label {
+    margin-bottom: 0.5rem;
+}
 .image-object {
     border-top: 1px solid #ddd;
     padding-top: 0.2em;

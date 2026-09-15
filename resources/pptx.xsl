@@ -36,10 +36,23 @@
             <!-- container div for each slide -->
             <div class="slide-item">
                 <h1 class="h4">Slide <xsl:value-of select="position()"/></h1>
-                <!-- initial template for a slide -->
-                <xsl:apply-templates select=".//p:sp | .//p:pic | .//p:graphicFrame"/>
+                <!-- Process top-level shapes so grouped pictures can remain grouped. -->
+                <xsl:apply-templates select=".//p:spTree/*[self::p:sp or self::p:pic or self::p:graphicFrame or self::p:grpSp]"/>
             </div>
         </xsl:for-each>
+    </xsl:template>
+
+    <!-- Keep pictures and associated shapes inside a visible group boundary. -->
+    <xsl:template match="p:grpSp[.//p:pic and not(ancestor::p:grpSp)]">
+        <div class="grouped-images">
+            <p class="grouped-images-label"><strong>Grouped images</strong></p>
+            <xsl:apply-templates select="p:sp | p:pic | p:graphicFrame | p:grpSp"/>
+        </div>
+    </xsl:template>
+
+    <!-- Preserve non-image groups without adding a visual boundary. -->
+    <xsl:template match="p:grpSp">
+        <xsl:apply-templates select="p:sp | p:pic | p:graphicFrame | p:grpSp"/>
     </xsl:template>
 
     <!-- general template for text container -->

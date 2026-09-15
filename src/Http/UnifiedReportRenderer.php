@@ -73,7 +73,11 @@ final class UnifiedReportRenderer
                     continue;
                 }
 
-                $slideNode->insertBefore($this->createFinding($document, $finding), $imageNode->nextSibling);
+                $imageParent = $imageNode->parentNode;
+                if (!$imageParent instanceof DOMNode) {
+                    continue;
+                }
+                $imageParent->insertBefore($this->createFinding($document, $finding), $imageNode->nextSibling);
             }
         }
 

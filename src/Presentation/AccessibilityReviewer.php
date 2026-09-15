@@ -8,7 +8,7 @@ namespace Effortmark\PptxChecker\Presentation;
 final class AccessibilityReviewer
 {
     /**
-     * @param list<array{number: int, title: string, visibleText: string, images: list<array{filename: string, description: string, decorative: bool}>}> $slides
+     * @param list<array{number: int, title: string, visibleText: string, images: list<array{filename: string, description: string, decorative: bool, groupId?: string|null}>}> $slides
      * @return array{summary: array{images: int, errors: int, warnings: int, passed: int, excluded: int}, slides: list<array{number: int, title: string, findings: list<array<string, mixed>>}>}
      */
     public function review(array $slides): array
@@ -18,6 +18,14 @@ final class AccessibilityReviewer
 
         foreach ($slides as $slide) {
             $findings = [];
+            $describedGroups = [];
+            foreach ($slide['images'] as $image) {
+                $groupId = $image['groupId'] ?? null;
+                if ($groupId !== null && trim($image['description']) !== '') {
+                    $describedGroups[$groupId] = true;
+                }
+            }
+
             foreach ($slide['images'] as $imageIndex => $image) {
                 $summary['images']++;
 
@@ -26,7 +34,8 @@ final class AccessibilityReviewer
                     continue;
                 }
 
-                if (trim($image['description']) !== '') {
+                $groupId = $image['groupId'] ?? null;
+                if (trim($image['description']) !== '' || ($groupId !== null && isset($describedGroups[$groupId]))) {
                     $summary['passed']++;
                     continue;
                 }

@@ -48,6 +48,31 @@ final class UnifiedReportRendererTest extends TestCase
         );
     }
 
+    public function testItPlacesAReviewInsideTheParentOfAGroupedImage(): void
+    {
+        $report = '<div class="slide-item"><h1>Slide 1</h1><div class="grouped-images">'
+            . '<div class="image-object"><p>Grouped image details</p></div></div></div>';
+        $review = ['slides' => [['findings' => [[
+            'imageNumber' => 1,
+            'code' => 'image.alt.missing',
+            'severity' => 'error',
+            'status' => 'missing',
+            'score' => null,
+            'message' => 'This image does not have alternative text.',
+            'recommendation' => 'Add a description.',
+            'matchedTitleTerms' => [],
+            'matchedBodyTerms' => [],
+        ]]]]];
+
+        $html = (new UnifiedReportRenderer())->render($report, $review);
+
+        self::assertStringContainsString('review-finding error', $html);
+        self::assertMatchesRegularExpression(
+            '/grouped-images.*image-object.*review-finding error.*<\/div>/s',
+            $html,
+        );
+    }
+
     public function testItPreservesUtf8TextWhenReparsingTheReport(): void
     {
         $report = '<div class="slide-item"><h1>Writer’s “summary”</h1><p>Body text</p></div>';

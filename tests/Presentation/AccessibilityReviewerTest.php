@@ -33,6 +33,42 @@ final class AccessibilityReviewerTest extends TestCase
         self::assertSame('missing.png', $review['slides'][0]['findings'][0]['filename']);
     }
 
+    public function testOneDescriptionPassesEveryImageInTheSameGroup(): void
+    {
+        $review = (new AccessibilityReviewer())->review([[
+            'number' => 1,
+            'title' => '',
+            'visibleText' => '',
+            'images' => [
+                ['filename' => 'part-1.png', 'description' => '', 'decorative' => false, 'groupId' => 'slide1-group-4'],
+                ['filename' => 'part-2.png', 'description' => 'Combined diagram description', 'decorative' => false, 'groupId' => 'slide1-group-4'],
+                ['filename' => 'separate.png', 'description' => '', 'decorative' => false, 'groupId' => null],
+            ],
+        ]]);
+
+        self::assertSame(3, $review['summary']['images']);
+        self::assertSame(1, $review['summary']['errors']);
+        self::assertSame(2, $review['summary']['passed']);
+        self::assertCount(1, $review['slides'][0]['findings']);
+        self::assertSame('separate.png', $review['slides'][0]['findings'][0]['filename']);
+    }
+
+    public function testAnEntirelyUndescribedGroupStillReportsEachImage(): void
+    {
+        $review = (new AccessibilityReviewer())->review([[
+            'number' => 1,
+            'title' => '',
+            'visibleText' => '',
+            'images' => [
+                ['filename' => 'part-1.png', 'description' => '', 'decorative' => false, 'groupId' => 'slide1-group-4'],
+                ['filename' => 'part-2.png', 'description' => '', 'decorative' => false, 'groupId' => 'slide1-group-4'],
+            ],
+        ]]);
+
+        self::assertSame(2, $review['summary']['errors']);
+        self::assertCount(2, $review['slides'][0]['findings']);
+    }
+
     public function testItReturnsNoFindingsWhenAllImagesHaveDescriptions(): void
     {
         $review = (new AccessibilityReviewer())->review([[

@@ -43,6 +43,8 @@ foreach ($result->review['slides'] as $slide) {
         .slide-item > h1, .slide-item > h2, .slide-item > h3, .slide-item > h4 { margin-bottom: 1.5mm; }
         .slide-item > p { margin-bottom: 1.2mm; }
         .slide-item > ul, .slide-item > ol { margin-top: 0.5mm; margin-bottom: 1.2mm; }
+        .grouped-images { margin: 2mm 0; padding: 3mm; border: 1.5pt solid #667085; background: #f8f9fa; }
+        .grouped-images-label { margin-bottom: 2mm; }
         .image-object { margin-top: 3mm; padding-top: 2mm; border-top: 1px solid #ddd; }
         .review-finding, .review-empty { margin: 3mm 0; padding: 2mm; border: 1px solid #aaa; }
         .review-finding { line-height: 1.2; }
