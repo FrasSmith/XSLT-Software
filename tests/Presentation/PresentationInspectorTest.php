@@ -52,7 +52,7 @@ final class PresentationInspectorTest extends TestCase
                        xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
                        xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
                   <p:cSld><p:spTree><p:grpSp>
-                    <p:nvGrpSpPr><p:cNvPr id="7" name="Diagram"/></p:nvGrpSpPr>
+                    <p:nvGrpSpPr><p:cNvPr id="7" name="Diagram" descr="Overall diagram description"/></p:nvGrpSpPr>
                     <p:pic><p:nvPicPr><p:cNvPr id="8" name="Part 1" descr=""/></p:nvPicPr><p:blipFill><a:blip r:embed="rId1"/></p:blipFill></p:pic>
                     <p:grpSp>
                       <p:nvGrpSpPr><p:cNvPr id="10" name="Nested group"/></p:nvGrpSpPr>
@@ -77,5 +77,7 @@ final class PresentationInspectorTest extends TestCase
         self::assertSame('slide1-group-7', $images[0]['groupId']);
         self::assertSame($images[0]['groupId'], $images[1]['groupId']);
         self::assertSame('Diagram description', $images[1]['description']);
+        self::assertSame('Overall diagram description', $images[0]['groupDescription']);
+        self::assertSame($images[0]['groupDescription'], $images[1]['groupDescription']);
     }
 }

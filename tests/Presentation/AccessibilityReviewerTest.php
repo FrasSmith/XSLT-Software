@@ -53,6 +53,26 @@ final class AccessibilityReviewerTest extends TestCase
         self::assertSame('separate.png', $review['slides'][0]['findings'][0]['filename']);
     }
 
+    public function testAGroupLevelDescriptionPassesImagesWithoutIndividualDescriptions(): void
+    {
+        $review = (new AccessibilityReviewer())->review([[
+            'number' => 1,
+            'title' => '',
+            'visibleText' => '',
+            'images' => [[
+                'filename' => 'diagram.png',
+                'description' => '',
+                'decorative' => false,
+                'groupId' => 'slide1-group-4',
+                'groupDescription' => 'Overall diagram description',
+            ]],
+        ]]);
+
+        self::assertSame(0, $review['summary']['errors']);
+        self::assertSame(1, $review['summary']['passed']);
+        self::assertSame([], $review['slides'][0]['findings']);
+    }
+
     public function testAnEntirelyUndescribedGroupStillReportsEachImage(): void
     {
         $review = (new AccessibilityReviewer())->review([[

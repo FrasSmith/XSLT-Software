@@ -25,7 +25,7 @@ final class PresentationInspector
      * Reads slides in numeric order and captures titles, visible text, and pictures.
      * Image binaries are not loaded; their relationship targets identify them.
      *
-     * @return list<array{number: int, title: string, visibleText: string, images: list<array{filename: string, description: string, decorative: bool, groupId: string|null}>}>
+     * @return list<array{number: int, title: string, visibleText: string, images: list<array{filename: string, description: string, decorative: bool, groupId: string|null, groupDescription: string}>}>
      */
     public function inspect(DOMDocument $document): array
     {
@@ -66,6 +66,7 @@ final class PresentationInspector
                         'description' => trim($this->firstValue($xpath, './/p:cNvPr/@descr', $pictureNode)),
                         'decorative' => $this->isDecorative($xpath, $pictureNode),
                         'groupId' => $this->groupId($xpath, $pictureNode, $number),
+                        'groupDescription' => $this->groupDescription($xpath, $pictureNode),
                     ];
                 }
             }
@@ -113,6 +114,26 @@ final class PresentationInspector
     /** Returns a slide-scoped identifier for the outermost containing picture group. */
     private function groupId(DOMXPath $xpath, DOMElement $picture, int $slideNumber): ?string
     {
+        $group = $this->outermostGroup($picture);
+        if (!$group instanceof DOMElement) {
+            return null;
+        }
+
+        $id = $this->firstValue($xpath, './p:nvGrpSpPr/p:cNvPr/@id', $group);
+        return sprintf('slide%d-group-%s', $slideNumber, $id !== '' ? $id : spl_object_id($group));
+    }
+
+    /** Returns alt text assigned to the outer group rather than an individual image. */
+    private function groupDescription(DOMXPath $xpath, DOMElement $picture): string
+    {
+        $group = $this->outermostGroup($picture);
+        return $group instanceof DOMElement
+            ? trim($this->firstValue($xpath, './p:nvGrpSpPr/p:cNvPr/@descr', $group))
+            : '';
+    }
+
+    private function outermostGroup(DOMElement $picture): ?DOMElement
+    {
         $group = null;
         $ancestor = $picture->parentNode;
         while ($ancestor instanceof DOMElement) {
@@ -121,13 +142,7 @@ final class PresentationInspector
             }
             $ancestor = $ancestor->parentNode;
         }
-
-        if (!$group instanceof DOMElement) {
-            return null;
-        }
-
-        $id = $this->firstValue($xpath, './p:nvGrpSpPr/p:cNvPr/@id', $group);
-        return sprintf('slide%d-group-%s', $slideNumber, $id !== '' ? $id : spl_object_id($group));
+        return $group;
     }
 
     /**

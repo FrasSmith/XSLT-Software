@@ -46,6 +46,9 @@
     <xsl:template match="p:grpSp[.//p:pic and not(ancestor::p:grpSp)]">
         <div class="grouped-images">
             <p class="grouped-images-label"><strong>Grouped images</strong></p>
+            <xsl:if test="normalize-space(p:nvGrpSpPr/p:cNvPr/@descr) != ''">
+                <p class="grouped-images-description"><strong>Description/Alt-text: </strong><xsl:value-of select="p:nvGrpSpPr/p:cNvPr/@descr"/></p>
+            </xsl:if>
             <xsl:apply-templates select="p:sp | p:pic | p:graphicFrame | p:grpSp"/>
         </div>
     </xsl:template>
