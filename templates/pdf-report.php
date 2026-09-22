@@ -40,8 +40,10 @@ foreach ($result->review['slides'] as $slide) {
         .review-overview.neutral { border-left-color: #667085; background: #f8f9fa; }
         .review-overview ul { margin-bottom: 0; }
         .slide-item { margin: 0 0 6mm; padding: 4mm; border: 1px solid #aaa; line-height: 1.2; }
-        .slide-item > h1, .slide-item > h2, .slide-item > h3, .slide-item > h4 { margin-bottom: 1.5mm; }
+        .slide-item .slide-title { margin-bottom: 1.5mm; font-size: 11.5pt; font-weight: bold; }
+        .slide-item .slide-title p { margin-bottom: 0; }
         .slide-item > p { margin-bottom: 1.2mm; }
+        .slide-item > .slide-number { margin-top: 1.5mm; margin-bottom: 0; }
         .slide-item > ul, .slide-item > ol { margin-top: 0.5mm; margin-bottom: 1.2mm; }
         .grouped-images { margin: 2mm 0; padding: 3mm; border: 1.5pt solid #667085; background: #f8f9fa; }
         .grouped-images-label { margin-bottom: 2mm; }

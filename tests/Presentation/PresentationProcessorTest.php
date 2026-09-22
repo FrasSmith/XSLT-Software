@@ -37,6 +37,12 @@ final class PresentationProcessorTest extends TestCase
         self::assertSame('example.pptx', $result->filename);
         self::assertSame(1, $result->slideCount);
         self::assertStringContainsString('Total slides:', $result->reportHtml);
+        self::assertStringContainsString('<div class="slide-title">', $result->reportHtml);
+        self::assertStringContainsString('class="slide-number">Slide 1', $result->reportHtml);
+        self::assertLessThan(
+            strpos($result->reportHtml, 'class="slide-number">Slide 1'),
+            strpos($result->reportHtml, 'Hello world'),
+        );
         self::assertStringContainsString('Hello world', $result->reportHtml);
         self::assertStringContainsString('Hello world', $result->slides[0]['text']);
         self::assertStringContainsString('<ul><li>First item</li></ul>', $result->reportHtml);

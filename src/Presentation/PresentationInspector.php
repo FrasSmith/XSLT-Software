@@ -49,12 +49,13 @@ final class PresentationInspector
 
         $slides = [];
         foreach ($slideNodes as $position => $slideNode) {
-            $number = (int) $slideNode->getAttribute('num');
-            $titleNodes = $xpath->query(".//p:sp[.//p:ph[@type='title' or @type='ctrTitle']]//a:t", $slideNode);
+             $titleNodes = $xpath->query(".//p:sp[.//p:ph[@type='title' or @type='ctrTitle']]//a:t", $slideNode);
             $textNodes = $xpath->query('.//a:t', $slideNode);
             $pictureNodes = $xpath->query('.//p:pic', $slideNode);
 
             $images = [];
+            $number = (int) $slideNode->getAttribute('num');
+
             if ($pictureNodes !== false) {
                 foreach ($pictureNodes as $pictureNode) {
                     if (!$pictureNode instanceof DOMElement) {
@@ -72,10 +73,10 @@ final class PresentationInspector
             }
 
             $slides[] = [
-                'number' => $position + 1,
                 'title' => $this->joinValues($titleNodes === false ? [] : iterator_to_array($titleNodes)),
                 'visibleText' => $this->joinValues($textNodes === false ? [] : iterator_to_array($textNodes)),
                 'images' => $images,
+                'number' => $position + 1,
             ];
         }
 

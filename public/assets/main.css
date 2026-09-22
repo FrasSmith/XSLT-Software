@@ -28,14 +28,20 @@
     border: 1px solid #cdcecf;
     line-height: 1.25;
 }
-.slide-item > h1,
-.slide-item > h2,
-.slide-item > h3,
-.slide-item > h4 {
+.slide-item .slide-title {
+    font-size: 1.15rem;
+    font-weight: bold;
     margin-bottom: 0.5rem;
+}
+.slide-item .slide-title p {
+    margin-bottom: 0;
 }
 .slide-item > p {
     margin-bottom: 0.35rem;
+}
+.slide-item .slide-number {
+    margin-top: 0.5rem;
+    margin-bottom: 0;
 }
 .slide-item > ul,
 .slide-item > ol {

@@ -35,9 +35,17 @@
             <xsl:sort select="@num" data-type="number"/>
             <!-- container div for each slide -->
             <div class="slide-item">
-                <h1 class="h4">Slide <xsl:value-of select="position()"/></h1>
+                <xsl:if test=".//p:spTree/*[self::p:sp and .//p:ph[@type='title' or @type='ctrTitle']]">
+                    <div class="slide-title">
+                        <xsl:apply-templates select=".//p:spTree/*[self::p:sp and .//p:ph[@type='title' or @type='ctrTitle']]"/>
+                    </div>
+                </xsl:if>
                 <!-- Process top-level shapes so grouped pictures can remain grouped. -->
-                <xsl:apply-templates select=".//p:spTree/*[self::p:sp or self::p:pic or self::p:graphicFrame or self::p:grpSp]"/>
+                <xsl:apply-templates select=".//p:spTree/*[
+                    self::p:pic or self::p:graphicFrame or self::p:grpSp
+                    or (self::p:sp and not(.//p:ph[@type='title' or @type='ctrTitle']))
+                ]"/>
+                <p class="slide-number">Slide <xsl:value-of select="position()"/></p>
             </div>
         </xsl:for-each>
     </xsl:template>
@@ -296,11 +304,10 @@
 
         <!-- image filename and description -->
         <div class="image-object">
+            <xsl:attribute name="data-filename">
+                <xsl:value-of select="$slide.rels.node//z:Relationship[@Id = $id]/@Target"/>
+            </xsl:attribute>
             <p><strong>Image: </strong>
-                <xsl:text> </xsl:text>
-                <xsl:value-of
-                    select="$slide.rels.node//z:Relationship[@Id = $id]/@Target"/>
-                <br />
                 <span class="text-muted"><strong>Description/Alt-text: </strong>
                 <xsl:value-of select="p:nvPicPr/p:cNvPr/@descr"/></span>
             </p>
