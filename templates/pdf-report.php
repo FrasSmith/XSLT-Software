@@ -26,6 +26,18 @@ foreach ($result->review['slides'] as $slide) {
     <title><?= htmlspecialchars($result->filename, ENT_QUOTES, 'UTF-8') ?> – PPTX Checker</title>
     <style>
         @page { size: A4 portrait; margin: 15mm; }
+        body { padding-bottom: 8mm; }
+        .pdf-footer {
+            position: fixed;
+            right: 0;
+            bottom: -8mm;
+            left: 0;
+            color: #667085;
+            border-top: 0.5pt solid #aaa;
+            font-size: 8pt;
+            text-align: center;
+        }
+        .pdf-page-number:after { content: "Page " counter(page); }
         body { color: #212529; font-family: "DejaVu Sans", sans-serif; font-size: 10pt; line-height: 1.4; }
         h1 { margin: 0 0 8mm; font-size: 20pt; }
         h2 { margin: 0 0 3mm; font-size: 16pt; }
@@ -39,10 +51,14 @@ foreach ($result->review['slides'] as $slide) {
 
         .review-overview.neutral { border-left-color: #667085; background: #f8f9fa; }
         .review-overview ul { margin-bottom: 0; }
-        .slide-item { margin: 0 0 6mm; padding: 4mm; border: 1px solid #aaa; line-height: 1.2; }
+        /* Keep a slide and its notes together when it fits; oversized slides may flow. */
+        .slide-item { margin: 0 0 6mm; padding: 4mm; border: 1px solid #aaa; line-height: 1.2; break-inside: avoid; page-break-inside: avoid; }
         .slide-item .slide-title { margin-bottom: 1.5mm; font-size: 11.5pt; font-weight: bold; }
         .slide-item .slide-title p { margin-bottom: 0; }
         .slide-item > p { margin-bottom: 1.2mm; }
+        .slide-notes-divider { margin: 2mm 0 1.2mm; border: 0; border-top: 0.5pt solid #aaa; }
+        .slide-notes { margin-bottom: 1.5mm; white-space: pre-line; }
+        .slide-notes strong { display: block; margin-bottom: 0.5mm; }
         .slide-item > .slide-number { margin-top: 2mm; padding-top: 1.2mm; border-top: 0.5pt solid #aaa; margin-bottom: 0; }
         .slide-item > ul, .slide-item > ol { margin-top: 0.5mm; margin-bottom: 1.2mm; }
         .grouped-images { margin: 2mm 0; padding: 3mm; border: 1.5pt solid #667085; background: #f8f9fa; }
@@ -62,6 +78,9 @@ foreach ($result->review['slides'] as $slide) {
     </style>
 </head>
 <body>
+    <div class="pdf-footer">
+        <?= htmlspecialchars($result->filename, ENT_QUOTES, 'UTF-8') ?> — <span class="pdf-page-number"></span>
+    </div>
     <h1><?= htmlspecialchars($result->filename, ENT_QUOTES, 'UTF-8') ?></h1>
     <section>
         <?php if ((int) $result->review['summary']['images'] === 0): ?>

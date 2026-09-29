@@ -34,6 +34,11 @@
                         <small class="form-text text-muted">.pptx files only; maximum application limit 50 MB</small>
                     </div>
                     <div class="form-group form-check">
+                        <input type="checkbox" id="include_notes" name="include_notes" value="1" class="form-check-input" checked>
+                        <label for="include_notes" class="form-check-label">Include notes</label>
+                        <small class="form-text text-muted">Include presenter notes above each slide number when available.</small>
+                    </div>
+                    <div class="form-group form-check">
                         <input type="checkbox" id="generate_pdf" name="generate_pdf" value="1" class="form-check-input">
                         <label for="generate_pdf" class="form-check-label">Also generate a PDF report</label>
                         <small class="form-text text-muted">The PDF download will start automatically when the HTML report is ready.</small>

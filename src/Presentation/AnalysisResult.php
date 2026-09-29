@@ -15,7 +15,7 @@ use JsonSerializable;
 final class AnalysisResult implements JsonSerializable
 {
     /**
-     * @param list<array{number: int, text: string, images: list<array{filename: string, description: string}>}> $slides
+     * @param list<array{number: int, text: string, images: list<array{filename: string, description: string}>, notes?: string}> $slides
      * @param array<string, mixed> $review
      */
     public function __construct(

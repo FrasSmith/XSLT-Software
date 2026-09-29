@@ -19,6 +19,8 @@ final class ReportTemplateTest extends TestCase
 
         self::assertStringContainsString('type="checkbox"', $html);
         self::assertStringContainsString('name="generate_pdf"', $html);
+        self::assertStringContainsString('name="include_notes"', $html);
+        self::assertStringContainsString('name="include_notes" value="1" class="form-check-input" checked', $html);
         self::assertStringContainsString('Also generate a PDF report', $html);
         self::assertStringContainsString('action="/pptx-checker/report"', $html);
         self::assertStringContainsString('href="/pptx-checker/assets/main.css"', $html);

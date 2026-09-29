@@ -49,12 +49,15 @@ final class PresentationInspector
 
         $slides = [];
         foreach ($slideNodes as $position => $slideNode) {
-             $titleNodes = $xpath->query(".//p:sp[.//p:ph[@type='title' or @type='ctrTitle']]//a:t", $slideNode);
+             $number = (int) $slideNode->getAttribute('num');
+            $titleNodes = $xpath->query(".//p:sp[.//p:ph[@type='title' or @type='ctrTitle']]//a:t", $slideNode);
             $textNodes = $xpath->query('.//a:t', $slideNode);
             $pictureNodes = $xpath->query('.//p:pic', $slideNode);
+            $notesNodes = $xpath->query(
+                sprintf("/files/file[@name='ppt/notesSlides/notesSlide%d.xml']//p:sp[.//p:ph[@type='body' or @type='obj']]//a:t", $number),
+            );
 
             $images = [];
-            $number = (int) $slideNode->getAttribute('num');
 
             if ($pictureNodes !== false) {
                 foreach ($pictureNodes as $pictureNode) {
@@ -76,6 +79,7 @@ final class PresentationInspector
                 'title' => $this->joinValues($titleNodes === false ? [] : iterator_to_array($titleNodes)),
                 'visibleText' => $this->joinValues($textNodes === false ? [] : iterator_to_array($textNodes)),
                 'images' => $images,
+                'notes' => $this->joinValues($notesNodes === false ? [] : iterator_to_array($notesNodes)),
                 'number' => $position + 1,
             ];
         }

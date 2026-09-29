@@ -39,6 +39,19 @@
 .slide-item > p {
     margin-bottom: 0.35rem;
 }
+.slide-notes-divider {
+    margin: 0.75rem 0 0.4rem;
+    border: 0;
+    border-top: 1px solid #cdcecf;
+}
+.slide-notes {
+    margin-bottom: 0.5rem;
+    white-space: pre-line;
+}
+.slide-notes strong {
+    display: block;
+    margin-bottom: 0.25rem;
+}
 .slide-item .slide-number {
     margin-top: 0.75rem;
     padding-top: 0.4rem;

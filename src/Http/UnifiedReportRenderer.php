@@ -26,8 +26,9 @@ final class UnifiedReportRenderer
      * inserted text is created as DOM text nodes rather than concatenated markup.
      *
      * @param array<string, mixed> $review
+     * @param list<string> $notes
      */
-    public function render(string $reportHtml, array $review): string
+    public function render(string $reportHtml, array $review, array $notes = []): string
     {
         $document = new DOMDocument();
         $previous = libxml_use_internal_errors(true);
@@ -62,6 +63,11 @@ final class UnifiedReportRenderer
             $imageNodes = $xpath->query(".//*[contains(concat(' ', normalize-space(@class), ' '), ' image-object ')]", $slideNode);
             $images = $imageNodes === false ? [] : iterator_to_array($imageNodes);
 
+            $note = trim((string) ($notes[$slideIndex] ?? ''));
+            if ($note !== '') {
+                $this->insertNotes($document, $slideNode, $note, $xpath);
+            }
+
             foreach ($findings as $finding) {
                 if (!is_array($finding) || ($finding['code'] ?? '') !== 'image.alt.missing') {
                     continue;
@@ -82,6 +88,25 @@ final class UnifiedReportRenderer
         }
 
         return $this->innerHtml($document, $root);
+    }
+
+    /** Inserts presenter notes immediately before the slide number. */
+    private function insertNotes(DOMDocument $document, DOMElement $slide, string $note, DOMXPath $xpath): void
+    {
+        $slideNumber = $xpath->query(".//*[contains(concat(' ', normalize-space(@class), ' '), ' slide-number ')]", $slide)?->item(0);
+        $parent = $slideNumber?->parentNode ?? $slide;
+
+        $divider = $document->createElement('hr');
+        $divider->setAttribute('class', 'slide-notes-divider');
+        $notes = $document->createElement('div');
+        $notes->setAttribute('class', 'slide-notes');
+        $label = $document->createElement('strong');
+        $label->appendChild($document->createTextNode('Notes'));
+        $notes->appendChild($label);
+        $notes->appendChild($document->createTextNode("\n" . $note));
+
+        $parent->insertBefore($divider, $slideNumber);
+        $parent->insertBefore($notes, $slideNumber);
     }
 
     /**

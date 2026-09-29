@@ -136,8 +136,12 @@ try {
         }
 
         $upload = UploadedPresentation::fromFiles($_FILES);
-        $result = $processor->process($upload->temporaryPath, $upload->originalFilename);
-        $unifiedReportHtml = $unifiedReportRenderer->render($result->reportHtml, $result->review);
+        $includeNotes = (string) ($_POST['include_notes'] ?? '') === '1';
+        $result = $processor->process($upload->temporaryPath, $upload->originalFilename, $includeNotes);
+        $notes = $includeNotes
+            ? array_map(static fn (array $slide): string => (string) ($slide['notes'] ?? ''), $result->slides)
+            : [];
+        $unifiedReportHtml = $unifiedReportRenderer->render($result->reportHtml, $result->review, $notes);
         $automaticPdfDownloadUrl = null;
 
         if ((string) ($_POST['generate_pdf'] ?? '') === '1') {

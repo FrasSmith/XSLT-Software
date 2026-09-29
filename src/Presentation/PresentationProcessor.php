@@ -38,7 +38,7 @@ final class PresentationProcessor
      * a private workspace controlled by this service. The caller's file is never
      * modified or deleted.
      */
-    public function process(string $sourcePath, string $originalFilename): AnalysisResult
+    public function process(string $sourcePath, string $originalFilename, bool $includeNotes = false): AnalysisResult
     {
         $this->assertSourceIsValid($sourcePath, $originalFilename);
         $workspace = $this->createWorkspace();
@@ -54,6 +54,12 @@ final class PresentationProcessor
             $review = $this->reviewer->review($presentation);
             $reportHtml = $this->transform($combinedDocument);
             $slides = $this->reportParser->parseSlides($reportHtml);
+            if ($includeNotes) {
+                foreach ($slides as $index => &$slide) {
+                    $slide['notes'] = (string) ($presentation[$index]['notes'] ?? '');
+                }
+                unset($slide);
+            }
 
             return new AnalysisResult(
                 basename($originalFilename),
@@ -186,7 +192,8 @@ final class PresentationProcessor
 
         return str_contains($name, 'ppt/slideLayouts')
             || str_contains($name, 'ppt/slides')
-            || str_contains($name, 'ppt/slideMasters');
+            || str_contains($name, 'ppt/slideMasters')
+            || str_contains($name, 'ppt/notesSlides');
     }
 
     /**
