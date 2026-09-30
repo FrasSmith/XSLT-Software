@@ -157,15 +157,6 @@ Point the virtual host's `DocumentRoot` at `public/` when server configuration i
 
 For Nginx or another server, configure a front-controller fallback to `public/index.php`.
 
-## Mythic Beasts SFTP deployment
+## SFTP deployment
 
-For deployment at `https://example.com/pptx-checker/` without shell access, use this split layout:
-
-```text
-/home/USERNAME/apps/pptx-checker/{resources,src,templates,vendor}
-/home/USERNAME/www/example.com/pptx-checker/{assets,index.php,.htaccess,.user.ini,deployment.php}
-```
-
-Upload the contents of local `public/`, not the directory itself, into the public `pptx-checker/` directory. Copy `public/deployment.php.example` to `deployment.php` there. The example derives `/home/USERNAME/apps/pptx-checker` from its location and configures `/pptx-checker` as the URL base path, so the hosting username does not need to be hardcoded.
-
-Run `composer install --no-dev --classmap-authoritative` locally and upload the resulting `vendor/` directory to the private application directory. The server does not need to run Composer. `deployment.php` is ignored by Git so environment-specific paths are not committed.
+An example SFTP deployment guide is available at [`docs/deployment/mythic-beasts-sftp.md`](docs/deployment/mythic-beasts-sftp.md). It uses generic `USERNAME` and `DOMAIN` placeholders and does not contain a live deployment layout.
